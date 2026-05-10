@@ -1,0 +1,57 @@
+CRM Design Requirements
+1. Event-Based Pipeline Structure
+Create separate pipelines for each event:
+
+Dubai
+Mumbai
+Bangalore
+Each event should function independently within the CRM.
+
+
+2. Sub-Pipelines Within Each Event
+For every event pipeline, include the following four sub-pipelines:
+
+Speakers
+Sponsors
+Awardee Nomination Board
+VIP / Media Partners & Associations
+
+3. Master Pipeline (Central Database)
+Create one main/master pipeline that consolidates all data across events.
+This should act as a centralized database (Master Sheet) for reporting and tracking.
+
+4. Data Fields (Mandatory for All Entries)
+Ensure each record includes the following fields:
+
+Name
+Contact Number
+Email Address
+LinkedIn ID
+Source
+Company Name
+Designation
+Lead Agent
+
+5. Pipeline Stages
+Each sub-pipeline should include the following stages:
+
+Lead Assigned
+Call Connected
+Info Sent
+Follow-Up 1
+Follow-Up 2
+Follow-Up 3 (corrected from duplicate numbering)
+Deal Lost
+Deal Won
+Declined
+
+6. Notes & Remarks
+Include a Notes/Remarks section at every stage to capture updates, context, and communication history.
+
+7. User Roles & Permissions
+CSM (Customer Success Managers):
+Can view, edit, and manage records
+Cannot delete any data
+Admin Access:
+Full control (including delete permissions)
+Restricted to only 1–2 admin accounts

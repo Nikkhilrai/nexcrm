@@ -1,0 +1,20 @@
+[Unit]
+Description=NexCRM Celery Worker
+After=network.target redis.service
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/nexcrm/backend
+EnvironmentFile=/home/ubuntu/nexcrm/backend/.env
+ExecStart=/home/ubuntu/nexcrm/backend/.venv/bin/celery \
+    -A core \
+    worker \
+    --loglevel=info \
+    --logfile=/var/log/nexcrm/celery-worker.log \
+    --concurrency=2
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

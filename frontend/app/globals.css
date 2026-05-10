@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/*
+  Brand tokens — extracted from lextalkworld.in CSS bundles.
+  Source of truth: docs/BRAND.md
+  Tailwind v4 uses @theme blocks for design tokens (no tailwind.config.ts).
+*/
+@theme {
+  /* Primary — amber spectrum (brand orange) */
+  --color-brand-50: #fffbeb;
+  --color-brand-100: #fef3c6;
+  --color-brand-200: #fee685;
+  --color-brand-300: #ffd236;
+  --color-brand-400: #fcbb00;
+  --color-brand-500: #f99c00;
+  --color-brand-600: #dd7400;
+  --color-brand-700: #b75000;
+  --color-brand-800: #953d00;
+  --color-brand-900: #7b3306;
+  --color-brand-950: #461901;
+
+  /* Gold accent (Legal Honor Awards mood) */
+  --color-gold-400: #d4a843;
+  --color-gold-500: #cfa45a;
+  --color-gold-600: #b08a45;
+
+  /* Ink — deep navy for high-contrast surfaces */
+  --color-ink-800: #1e2848;
+  --color-ink-900: #0f172b;
+  --color-ink-950: #050a15;
+
+  /* Warm off-white for soft backgrounds */
+  --color-cream: #fcfbf9;
+
+  /* Brand fonts (loaded via next/font in layout.tsx) */
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-heading: var(--font-playfair), Georgia, serif;
+}
+
+/* Page-wide defaults — slate-50 background matches the public site */
+html,
+body {
+  background-color: var(--color-slate-50);
+  color: var(--color-slate-900);
+}
+
+/* Match the public site's heading rhythm */
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}

@@ -1,0 +1,24 @@
+[Unit]
+Description=NexCRM Django API (gunicorn)
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/nexcrm/backend
+EnvironmentFile=/home/ubuntu/nexcrm/backend/.env
+ExecStartPre=/bin/mkdir -p /run/gunicorn
+ExecStartPre=/bin/chown ubuntu:ubuntu /run/gunicorn
+ExecStart=/home/ubuntu/nexcrm/backend/.venv/bin/gunicorn \
+    --workers 2 \
+    --bind unix:/run/gunicorn/gunicorn.sock \
+    --access-logfile /var/log/nexcrm/gunicorn-access.log \
+    --error-logfile /var/log/nexcrm/gunicorn-error.log \
+    --timeout 120 \
+    core.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
