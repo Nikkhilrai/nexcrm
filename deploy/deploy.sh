@@ -7,7 +7,7 @@
 # ─────────────────────────────────────────────────────────────
 set -e
 
-APP_DIR="/home/ubuntu/nexcrm"
+APP_DIR="/home/nikkhhilrai_gmail_com/nexcrm"
 
 echo "→ Pulling latest code..."
 cd "$APP_DIR"
