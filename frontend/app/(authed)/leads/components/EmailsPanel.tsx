@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import axios from "axios";
 import {
   Send, XCircle, CheckCircle2, Clock, AlertCircle, Plus,
-  ArrowDownLeft, ArrowUpRight,
+  ArrowDownLeft, ArrowUpRight, Maximize2,
 } from "lucide-react";
 
 import { Badge, Button, Card, Modal, Spinner } from "@/components/ui";
@@ -302,7 +302,8 @@ interface EmailsPanelProps {
 export function EmailsPanel({ leadId }: EmailsPanelProps) {
   const [thread, setThread] = useState<EmailThreadItem[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   function load() {
     setThread(null);
@@ -315,7 +316,7 @@ export function EmailsPanel({ leadId }: EmailsPanelProps) {
   useEffect(() => { load(); }, [leadId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSent() {
-    setModalOpen(false);
+    setSendOpen(false);
     load();
   }
 
@@ -329,6 +330,31 @@ export function EmailsPanel({ leadId }: EmailsPanelProps) {
 
   const inboundCount = thread?.filter((i) => i.direction === "inbound").length ?? 0;
 
+  const threadContent = (
+    <>
+      {loadError ? (
+        <p className="text-sm text-rose-700">{loadError}</p>
+      ) : thread === null ? (
+        <div className="flex items-center justify-center py-4">
+          <Spinner size="sm" label="Loading…" />
+        </div>
+      ) : thread.length === 0 ? (
+        <p className="text-sm text-slate-500 italic">No emails yet.</p>
+      ) : (
+        <ul className="space-y-4">
+          {thread.map((item) => (
+            <ThreadItem
+              key={`${item.direction}-${item.id}`}
+              item={item}
+              leadId={leadId}
+              onCancelled={handleCancelled}
+            />
+          ))}
+        </ul>
+      )}
+    </>
+  );
+
   return (
     <>
       <Card
@@ -339,41 +365,57 @@ export function EmailsPanel({ leadId }: EmailsPanelProps) {
             : "Sent and received emails for this lead."
         }
         action={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setExpanded(true)}
+              title="Expand thread"
+              className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+            <Button
+              size="sm"
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => setSendOpen(true)}
+            >
+              Send
+            </Button>
+          </div>
+        }
+      >
+        {threadContent}
+      </Card>
+
+      {/* Expanded view */}
+      <Modal
+        open={expanded}
+        onClose={() => setExpanded(false)}
+        title="Email Thread"
+        description={
+          inboundCount > 0
+            ? `${inboundCount} repl${inboundCount === 1 ? "y" : "ies"} received`
+            : "All sent and received emails for this lead."
+        }
+        size="xl"
+        footer={
           <Button
             size="sm"
             leftIcon={<Plus className="w-3.5 h-3.5" />}
-            onClick={() => setModalOpen(true)}
+            onClick={() => { setExpanded(false); setSendOpen(true); }}
           >
-            Send
+            Send email
           </Button>
         }
       >
-        {loadError ? (
-          <p className="text-sm text-rose-700">{loadError}</p>
-        ) : thread === null ? (
-          <div className="flex items-center justify-center py-4">
-            <Spinner size="sm" label="Loading…" />
-          </div>
-        ) : thread.length === 0 ? (
-          <p className="text-sm text-slate-500 italic">No emails yet.</p>
-        ) : (
-          <ul className="space-y-4">
-            {thread.map((item) => (
-              <ThreadItem
-                key={`${item.direction}-${item.id}`}
-                item={item}
-                leadId={leadId}
-                onCancelled={handleCancelled}
-              />
-            ))}
-          </ul>
-        )}
-      </Card>
+        <div className="max-h-[65vh] overflow-y-auto pr-1">
+          {threadContent}
+        </div>
+      </Modal>
 
       <SendEmailModal
-        open={modalOpen}
+        open={sendOpen}
         leadId={leadId}
-        onClose={() => setModalOpen(false)}
+        onClose={() => setSendOpen(false)}
         onSent={handleSent}
       />
     </>
