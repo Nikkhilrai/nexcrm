@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Plus, UserCog, UserX, UserCheck } from "lucide-react";
+import { Plus, UserCog, UserX, UserCheck, Trash2 } from "lucide-react";
 
 import { Badge, Button, Card, Spinner } from "@/components/ui";
 import { useAuth } from "@/lib/auth/context";
@@ -26,6 +26,7 @@ export default function AdminUsersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   function load() {
     setError(null);
@@ -66,6 +67,23 @@ export default function AdminUsersPage() {
       next[idx] = saved;
       return next;
     });
+  }
+
+  async function deleteUser(u: AdminUser) {
+    if (
+      !window.confirm(
+        `Permanently delete "${u.username}"?\n\nTheir leads will stay in the system but will be unassigned. This cannot be undone.`,
+      )
+    ) return;
+    setDeletingId(u.id);
+    try {
+      await api.users.delete(u.id);
+      setUsers((prev) => prev ? prev.filter((x) => x.id !== u.id) : prev);
+    } catch {
+      window.alert("Couldn't delete user.");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   async function toggleActive(u: AdminUser) {
@@ -175,7 +193,7 @@ export default function AdminUsersPage() {
                           <button
                             onClick={() => toggleActive(u)}
                             disabled={isMe || togglingId === u.id}
-                            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             aria-label={u.is_active ? "Deactivate" : "Reactivate"}
                             title={
                               isMe
@@ -190,6 +208,15 @@ export default function AdminUsersPage() {
                             ) : (
                               <UserCheck className="w-4 h-4" />
                             )}
+                          </button>
+                          <button
+                            onClick={() => deleteUser(u)}
+                            disabled={isMe || deletingId === u.id}
+                            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="Delete user"
+                            title={isMe ? "You can't delete yourself" : "Delete permanently"}
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

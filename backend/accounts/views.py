@@ -1,5 +1,5 @@
 from rest_framework import permissions, viewsets
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -36,7 +36,7 @@ class UserAdminViewSet(viewsets.ModelViewSet):
     serializer_class = UserAdminSerializer
     permission_classes = (IsAdmin,)
     pagination_class = None
-    http_method_names = ("get", "post", "patch", "put", "head", "options")
+    http_method_names = ("get", "post", "patch", "put", "delete", "head", "options")
     search_fields = ("username", "email", "first_name", "last_name")
     filterset_fields = ("role", "is_active")
 
@@ -49,3 +49,9 @@ class UserAdminViewSet(viewsets.ModelViewSet):
         if obj.is_superuser:
             raise NotFound()
         return obj
+
+    def destroy(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.pk == request.user.pk:
+            raise PermissionDenied("You cannot delete your own account.")
+        return super().destroy(request, *args, **kwargs)

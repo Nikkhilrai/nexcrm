@@ -25,9 +25,11 @@ export const users = {
     return data;
   },
 
-  /** Convenience wrapper — to "delete" a user, set is_active=false.
-   *  The backend blocks DELETE on /api/users/ to preserve audit trails. */
   async deactivate(id: number) {
     return this.update(id, { is_active: false });
+  },
+
+  async delete(id: number) {
+    await client.delete(`/api/users/${id}/`);
   },
 };
