@@ -4,9 +4,19 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
-  // Prevent Next.js from stripping trailing slashes before Vercel rewrites them.
-  // Without this, /api/auth/login/ → 308 → /api/auth/login, breaking Django URLs.
   skipTrailingSlashRedirect: true,
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*/",
+        destination: "http://34.56.168.240/api/:path*/",
+      },
+      {
+        source: "/api/:path*",
+        destination: "http://34.56.168.240/api/:path*/",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
