@@ -1,4 +1,4 @@
-import { client } from "./client";
+import { client, cursorPath } from "./client";
 import type {
   CreateInteractionPayload,
   Interaction,
@@ -22,7 +22,7 @@ export const leads = {
 
   /** Cursor pagination: backend returns absolute URLs in `next`/`previous`. */
   async listNext(cursorUrl: string) {
-    const { data } = await client.get<PaginatedResponse<LeadListItem>>(cursorUrl);
+    const { data } = await client.get<PaginatedResponse<LeadListItem>>(cursorPath(cursorUrl));
     return data;
   },
 

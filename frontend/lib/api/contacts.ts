@@ -1,4 +1,4 @@
-import { client } from "./client";
+import { client, cursorPath } from "./client";
 import type {
   BulkUploadResponse,
   Contact,
@@ -22,7 +22,7 @@ export const contacts = {
 
   /** Follow the cursor `next` URL returned by `list()`. */
   async listNext(url: string) {
-    const { data } = await client.get<PaginatedResponse<Contact>>(url);
+    const { data } = await client.get<PaginatedResponse<Contact>>(cursorPath(url));
     return data;
   },
 

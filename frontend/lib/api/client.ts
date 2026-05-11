@@ -20,6 +20,21 @@ import type { RefreshResponse } from "./types";
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+/**
+ * Django cursor pagination returns absolute URLs like http://34.56.168.240/api/leads/?cursor=...
+ * In production these go through a Vercel proxy, so we must strip the origin
+ * and use only the path+query — otherwise the browser fetches HTTP from an
+ * HTTPS page and blocks it as mixed content.
+ */
+export function cursorPath(absoluteUrl: string): string {
+  try {
+    const u = new URL(absoluteUrl);
+    return u.pathname + u.search;
+  } catch {
+    return absoluteUrl;
+  }
+}
+
 export const client: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
