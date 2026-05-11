@@ -18,7 +18,6 @@ SECRET_KEY = config(
 )
 DEBUG = config("DJANGO_DEBUG", default=True, cast=bool)
 ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="*", cast=Csv())
-APPEND_SLASH = False
 
 # ─── Apps ───────────────────────────────────────────────────
 INSTALLED_APPS = [
