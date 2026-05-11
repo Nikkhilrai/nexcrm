@@ -1,11 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Lock the workspace root to this dir so a stray lockfile elsewhere can't
-  // confuse Turbopack's autodetection.
   turbopack: {
     root: __dirname,
   },
+  // Prevent Next.js from stripping trailing slashes before Vercel rewrites them.
+  // Without this, /api/auth/login/ → 308 → /api/auth/login, breaking Django URLs.
+  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;
