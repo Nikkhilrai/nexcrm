@@ -243,6 +243,7 @@ export interface LeadDetail {
   /** Decimal serialized as string (Django convention). */
   deal_value: string | null;
   deal_currency: Currency;
+  category: string;
   notes: string;
   created_by: number | null;
   created_by_username: string | null;

@@ -149,6 +149,7 @@ class Lead(models.Model):
             "currency; tiers can advertise both ₹ and $ prices."
         ),
     )
+    category = models.CharField(max_length=200, blank=True)
     notes = models.TextField(blank=True)
 
     # Audit

@@ -66,6 +66,7 @@ interface FormState {
   next_followup_at: string;
   deal_value: string;
   deal_currency: Currency;
+  category: string;
   notes: string;
 }
 
@@ -87,6 +88,7 @@ const EMPTY_FORM: FormState = {
   next_followup_at: "",
   deal_value: "",
   deal_currency: "INR",
+  category: "",
   notes: "",
 };
 
@@ -110,6 +112,7 @@ function fromLead(lead: LeadDetail): FormState {
     next_followup_at: lead.next_followup_at ? lead.next_followup_at.slice(0, 16) : "",
     deal_value: lead.deal_value ?? "",
     deal_currency: lead.deal_currency ?? "INR",
+    category: lead.category ?? "",
     notes: lead.notes ?? "",
   };
 }
@@ -133,6 +136,7 @@ function toPayload(form: FormState): LeadWritePayload {
     next_followup_at: form.next_followup_at || null,
     deal_value: form.deal_value.trim() || null,
     deal_currency: form.deal_currency,
+    category: form.category.trim(),
     notes: form.notes,
   };
 }
@@ -405,6 +409,13 @@ export function LeadForm({
             name="country"
             value={form.country}
             onChange={(e) => set("country", e.target.value)}
+          />
+          <Input
+            label="Category"
+            name="category"
+            value={form.category}
+            onChange={(e) => set("category", e.target.value)}
+            placeholder="e.g. VIP, Warm, Returning…"
           />
         </div>
       </Card>

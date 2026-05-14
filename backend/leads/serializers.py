@@ -213,6 +213,7 @@ class LeadDetailSerializer(serializers.ModelSerializer):
             "next_followup_at",
             "deal_value",
             "deal_currency",
+            "category",
             "notes",
             "created_by",
             "created_by_username",
