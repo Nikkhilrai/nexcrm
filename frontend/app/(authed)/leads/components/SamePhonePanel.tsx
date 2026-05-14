@@ -8,39 +8,52 @@ import { api, type LeadListItem } from "@/lib/api";
 
 interface SamePhonePanelProps {
   phone: string;
+  email?: string;
   excludeId: string;
 }
 
-/** "Has this person come back to us before?" — surfaces past leads on the same
- *  phone, excluding the one being viewed. Powered by /api/leads/by-phone/. */
-export function SamePhonePanel({ phone, excludeId }: SamePhonePanelProps) {
+/** Surfaces other leads for the same person.
+ *  Email is tried first (stronger identity signal); falls back to phone. */
+export function SamePhonePanel({ phone, email, excludeId }: SamePhonePanelProps) {
   const [rows, setRows] = useState<LeadListItem[] | null>(null);
+  const [matchedBy, setMatchedBy] = useState<"email" | "phone">("email");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!phone) {
-      setRows([]);
-      return;
-    }
     let cancelled = false;
-    api.leads
-      .byPhone(phone, excludeId)
-      .then((data) => {
-        if (!cancelled) setRows(data);
-      })
-      .catch(() => {
-        if (!cancelled) setError("Couldn't load same-phone history.");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [phone, excludeId]);
+
+    async function load() {
+      try {
+        if (email) {
+          const data = await api.leads.byEmail(email, excludeId);
+          if (!cancelled) {
+            setMatchedBy("email");
+            setRows(data);
+          }
+        } else if (phone) {
+          const data = await api.leads.byPhone(phone, excludeId);
+          if (!cancelled) {
+            setMatchedBy("phone");
+            setRows(data);
+          }
+        } else {
+          if (!cancelled) setRows([]);
+        }
+      } catch {
+        if (!cancelled) setError("Couldn't load lead history.");
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [email, phone, excludeId]);
+
+  const description = matchedBy === "email"
+    ? "Other leads tied to this email."
+    : "Other leads tied to this number.";
 
   return (
-    <Card
-      title="Same phone"
-      description="Other leads tied to this number."
-    >
+    <Card title="Same contact" description={description}>
       {error ? (
         <p className="text-sm text-rose-700">{error}</p>
       ) : rows === null ? (
@@ -48,7 +61,7 @@ export function SamePhonePanel({ phone, excludeId }: SamePhonePanelProps) {
           <Spinner size="sm" label="Looking…" />
         </div>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-slate-500 italic">No other leads on this number.</p>
+        <p className="text-sm text-slate-500 italic">No other leads for this contact.</p>
       ) : (
         <ul className="space-y-2">
           {rows.map((l) => (

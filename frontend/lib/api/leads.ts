@@ -48,10 +48,18 @@ export const leads = {
     await client.delete(`/api/leads/${id}/`);
   },
 
-  /** Powers the edit-page sidebar — past leads from the same number. */
+  /** Powers the edit-page sidebar — past leads from the same phone. */
   async byPhone(phone: string, exclude?: string) {
     const { data } = await client.get<LeadListItem[]>("/api/leads/by-phone/", {
       params: { phone, exclude },
+    });
+    return data;
+  },
+
+  /** Powers the edit-page sidebar — past leads from the same email (priority over phone). */
+  async byEmail(email: string, exclude?: string) {
+    const { data } = await client.get<LeadListItem[]>("/api/leads/by-email/", {
+      params: { email, exclude },
     });
     return data;
   },

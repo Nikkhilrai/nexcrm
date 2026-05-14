@@ -76,23 +76,31 @@ class LeadViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="by-phone")
     def by_phone(self, request):
-        """GET /api/leads/by-phone/?phone=+91...&exclude=<uuid>
-
-        Powers the edit-page sidebar — "past leads from same phone number".
-        Returns ALL leads matching the phone (no pagination — there's
-        rarely more than a handful per number).
-        """
+        """GET /api/leads/by-phone/?phone=+91...&exclude=<uuid>"""
         phone = request.query_params.get("phone", "").strip()
         if not phone:
             raise ValidationError({"phone": "phone query param is required."})
-
         qs = self.get_queryset().filter(phone=phone)
         exclude = request.query_params.get("exclude", "").strip()
         if exclude:
             qs = qs.exclude(pk=exclude)
-        # Most recent first so the sidebar reads top-down.
-        qs = qs.order_by("-created_at")
-        return Response(LeadListSerializer(qs, many=True).data)
+        return Response(LeadListSerializer(qs.order_by("-created_at"), many=True).data)
+
+    @action(detail=False, methods=["get"], url_path="by-email")
+    def by_email(self, request):
+        """GET /api/leads/by-email/?email=...&exclude=<uuid>
+
+        Powers the edit-page sidebar when the lead has an email address.
+        Email is a stronger identity signal than phone, so takes priority.
+        """
+        email = request.query_params.get("email", "").strip().lower()
+        if not email:
+            raise ValidationError({"email": "email query param is required."})
+        qs = self.get_queryset().filter(email__iexact=email)
+        exclude = request.query_params.get("exclude", "").strip()
+        if exclude:
+            qs = qs.exclude(pk=exclude)
+        return Response(LeadListSerializer(qs.order_by("-created_at"), many=True).data)
 
     @action(
         detail=True,

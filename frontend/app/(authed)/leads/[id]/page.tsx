@@ -138,7 +138,7 @@ export default function LeadEditPage({
           </div>
 
           <aside className="space-y-5">
-            <SamePhonePanel phone={lead.phone} excludeId={lead.id} />
+            <SamePhonePanel phone={lead.phone} email={lead.email ?? undefined} excludeId={lead.id} />
             <InteractionsPanel leadId={lead.id} />
             <StatusTimelinePanel leadId={lead.id} refreshKey={timelineKey} />
             <EmailsPanel leadId={lead.id} />
