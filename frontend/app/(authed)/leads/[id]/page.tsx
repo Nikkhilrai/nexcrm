@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 
 import { Spinner } from "@/components/ui";
 import { useAuth } from "@/lib/auth/context";
@@ -49,6 +49,7 @@ export default function LeadEditPage({
   const [loading, setLoading] = useState(true);
   const [bootError, setBootError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   // Bumped after every save so the status timeline re-fetches.
   const [timelineKey, setTimelineKey] = useState(0);
 
@@ -84,24 +85,54 @@ export default function LeadEditPage({
     };
   }, [id, user]);
 
+  async function handleDelete() {
+    if (!lead) return;
+    const confirmed = window.confirm(
+      `Delete "${lead.full_name}"? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setDeleting(true);
+    try {
+      await api.leads.remove(id);
+      router.push("/leads");
+    } catch {
+      alert("Failed to delete lead. Try again.");
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-5">
-      <div>
-        <button
-          type="button"
-          onClick={goBack}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-600 cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to leads
-        </button>
-        <h1 className="text-3xl text-ink-900 mt-2">
-          {lead ? lead.full_name : "Lead"}
-        </h1>
-        {lead && (
-          <p className="text-sm text-slate-600">
-            {lead.company || "—"} · {lead.phone}
-          </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <button
+            type="button"
+            onClick={goBack}
+            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-brand-600 cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to leads
+          </button>
+          <h1 className="text-3xl text-ink-900 mt-2">
+            {lead ? lead.full_name : "Lead"}
+          </h1>
+          {lead && (
+            <p className="text-sm text-slate-600">
+              {lead.company || "—"} · {lead.phone}
+            </p>
+          )}
+        </div>
+
+        {user?.role === "ADMIN" && lead && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="mt-7 inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-rose-600 border border-rose-200 hover:bg-rose-50 disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+            {deleting ? "Deleting…" : "Delete lead"}
+          </button>
         )}
       </div>
 
