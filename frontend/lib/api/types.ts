@@ -15,11 +15,14 @@ export const CURRENCY_SYMBOL: Record<Currency, string> = {
 
 export type LeadStatus =
   | "LEAD_ASSIGNED"
+  | "NOT_CONNECTED"
   | "CALL_CONNECTED"
   | "INFO_SENT"
+  | "PROPOSAL_SENT"
   | "FOLLOWUP_1"
   | "FOLLOWUP_2"
   | "FOLLOWUP_3"
+  | "INVOICE_SENT"
   | "DEAL_WON"
   | "DEAL_LOST"
   | "DECLINED";
@@ -27,11 +30,14 @@ export type LeadStatus =
 /** Ordered as the kanban columns + funnel chart should render. */
 export const LEAD_STATUSES: readonly LeadStatus[] = [
   "LEAD_ASSIGNED",
+  "NOT_CONNECTED",
   "CALL_CONNECTED",
   "INFO_SENT",
+  "PROPOSAL_SENT",
   "FOLLOWUP_1",
   "FOLLOWUP_2",
   "FOLLOWUP_3",
+  "INVOICE_SENT",
   "DEAL_WON",
   "DEAL_LOST",
   "DECLINED",

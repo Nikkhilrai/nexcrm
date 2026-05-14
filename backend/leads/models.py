@@ -67,11 +67,14 @@ class Lead(models.Model):
 
     class Status(models.TextChoices):
         LEAD_ASSIGNED = "LEAD_ASSIGNED", "Lead Assigned"
+        NOT_CONNECTED = "NOT_CONNECTED", "Not Connected"
         CALL_CONNECTED = "CALL_CONNECTED", "Call Connected"
         INFO_SENT = "INFO_SENT", "Info Sent"
+        PROPOSAL_SENT = "PROPOSAL_SENT", "Proposal Sent"
         FOLLOWUP_1 = "FOLLOWUP_1", "Follow-Up 1"
         FOLLOWUP_2 = "FOLLOWUP_2", "Follow-Up 2"
         FOLLOWUP_3 = "FOLLOWUP_3", "Follow-Up 3"
+        INVOICE_SENT = "INVOICE_SENT", "Invoice Sent"
         DEAL_WON = "DEAL_WON", "Deal Won"
         DEAL_LOST = "DEAL_LOST", "Deal Lost"
         DECLINED = "DECLINED", "Declined"

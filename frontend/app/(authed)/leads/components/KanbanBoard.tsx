@@ -61,11 +61,14 @@ export function KanbanBoard({ leads, onMove }: KanbanBoardProps) {
   const grouped = useMemo(() => {
     const map: Record<LeadStatus, LeadListItem[]> = {
       LEAD_ASSIGNED: [],
+      NOT_CONNECTED: [],
       CALL_CONNECTED: [],
       INFO_SENT: [],
+      PROPOSAL_SENT: [],
       FOLLOWUP_1: [],
       FOLLOWUP_2: [],
       FOLLOWUP_3: [],
+      INVOICE_SENT: [],
       DEAL_WON: [],
       DEAL_LOST: [],
       DECLINED: [],

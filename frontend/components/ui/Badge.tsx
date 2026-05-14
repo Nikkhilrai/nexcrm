@@ -10,7 +10,10 @@ export type BadgeTone =
   | "cyan"
   | "violet"
   | "emerald"
-  | "rose";
+  | "rose"
+  | "orange"
+  | "teal"
+  | "lime";
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
   neutral: "bg-slate-100 text-slate-700 border-slate-200",
@@ -22,6 +25,9 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   violet: "bg-violet-50 text-violet-700 border-violet-200",
   emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
   rose: "bg-rose-50 text-rose-700 border-rose-200",
+  orange: "bg-orange-50 text-orange-700 border-orange-200",
+  teal: "bg-teal-50 text-teal-700 border-teal-200",
+  lime: "bg-lime-50 text-lime-700 border-lime-200",
 };
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
