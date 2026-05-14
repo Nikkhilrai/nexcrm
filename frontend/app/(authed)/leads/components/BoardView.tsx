@@ -163,7 +163,18 @@ export function BoardView({
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && leads.length === 0 && (
+        <div className="bg-white border border-slate-200 rounded-xl p-12 flex flex-col items-center justify-center gap-3 text-center">
+          <p className="text-slate-500 text-sm">
+            No leads in{subPipeline ? ` "${subPipeline.name}"` : " this pipeline"} yet.
+          </p>
+          <p className="text-slate-400 text-xs">
+            Create a new lead and assign it to this pipeline to see it here.
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && leads.length > 0 && (
         <KanbanBoard
           leads={leads}
           onMove={async (leadId, newStatus, comment) => {
