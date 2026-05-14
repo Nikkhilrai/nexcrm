@@ -89,6 +89,12 @@ export interface CreateUserPayload {
 export type UpdateUserPayload = Partial<CreateUserPayload>;
 
 // ─── Event ─────────────────────────────────────────────────
+export interface EventVisibilityUser {
+  id: number;
+  username: string;
+  role: string;
+}
+
 export interface Event {
   id: number;
   name: string;
@@ -97,14 +103,18 @@ export interface Event {
   start_date: string;
   end_date: string;
   is_active: boolean;
+  /** Users explicitly granted access. Empty array = unrestricted (visible to all). */
+  visible_to_users: EventVisibilityUser[];
 }
 
-export type EventWritePayload = Partial<Omit<Event, "id">> & {
+export type EventWritePayload = Partial<Omit<Event, "id" | "visible_to_users">> & {
   name?: string;
   city?: string;
   country?: string;
   start_date?: string;
   end_date?: string;
+  /** List of user IDs to grant access. Empty array = unrestricted. */
+  visible_to?: number[];
 };
 
 // ─── SubPipeline (Phase 2.9) ───────────────────────────────

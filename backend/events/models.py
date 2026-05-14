@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -12,6 +13,14 @@ class Event(models.Model):
     is_active = models.BooleanField(
         default=True,
         help_text="Inactive events are hidden from new-lead dropdowns but still attached to historical leads.",
+    )
+    # Empty = visible to everyone (existing behaviour).
+    # Non-empty = only these users (+ all admins) can see this event.
+    visible_to = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="visible_events",
+        help_text="Users who can see this event. Empty means unrestricted. Admins always see all events.",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

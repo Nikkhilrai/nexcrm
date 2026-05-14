@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.permissions import IsAdmin, IsAdminOrReadUpdate
+from events.utils import accessible_events
 
 from .filters import LeadFilter
 from .models import Contact, Interaction, Lead, PackageTier, StatusHistory, SubPipeline
@@ -64,7 +65,9 @@ class LeadViewSet(viewsets.ModelViewSet):
             "created_by",
             "package_tier",
             "sub_pipeline",
-        ).prefetch_related(Prefetch("status_history", queryset=history_qs))
+        ).prefetch_related(Prefetch("status_history", queryset=history_qs)).filter(
+            event_interest__in=accessible_events(self.request.user)
+        )
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -465,7 +468,9 @@ class SubPipelineViewSet(viewsets.ModelViewSet):
         return [IsAdmin()]
 
     def get_queryset(self):
-        return SubPipeline.objects.select_related("event").all()
+        return SubPipeline.objects.select_related("event").filter(
+            event__in=accessible_events(self.request.user)
+        )
 
     def destroy(self, request, *args, **kwargs):
         # Same shape as PackageTierViewSet.destroy — convert PROTECT errors
@@ -509,7 +514,9 @@ class PackageTierViewSet(viewsets.ModelViewSet):
         return [IsAdmin()]
 
     def get_queryset(self):
-        return PackageTier.objects.all()
+        return PackageTier.objects.filter(
+            sub_pipeline__event__in=accessible_events(self.request.user)
+        )
 
     def destroy(self, request, *args, **kwargs):
         # PackageTier → Lead is on_delete=PROTECT. Without this catch the

@@ -93,7 +93,10 @@ if DATABASE_URL:
             "HOST": _u.hostname,
             "PORT": _u.port or 5432,
             "OPTIONS": {"sslmode": "require"},
-            "CONN_MAX_AGE": 0,  # Neon drops idle connections — always use fresh ones
+            # 0 = new connection per request (safe for direct Neon).
+            # Set DB_CONN_MAX_AGE=60 in .env after enabling Neon's PgBouncer pooler.
+            "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=0, cast=int),
+            "CONN_HEALTH_CHECKS": True,
         }
     }
 else:
