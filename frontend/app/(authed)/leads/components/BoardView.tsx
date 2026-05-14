@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import axios from "axios";
 
 import { Spinner } from "@/components/ui";
@@ -110,19 +111,22 @@ export function BoardView({
 
   return (
     <div className="space-y-4">
-      {/* Row 1 — events */}
+      {/* Row 1 — events. Each tab is a <Link> with an explicit URL so
+          navigation is handled by the browser/router, not onClick. */}
       <TabRow ariaLabel="Event">
         {events.map((ev) => {
           const slug = eventSlug(ev);
+          // Switching event clears pipeline so the normalize effect picks
+          // the correct default for the new event.
+          const href = `/leads?view=board&event=${slug}`;
           return (
-            <Tab
+            <TabLink
               key={ev.id}
+              href={href}
               active={ev.id === event?.id}
-              onClick={() => onScopeChange({ eventSlug: slug })}
-              title={ev.name}
             >
               {ev.name}
-            </Tab>
+            </TabLink>
           );
         })}
       </TabRow>
@@ -138,16 +142,18 @@ export function BoardView({
             No sub-pipelines yet for this event — admin can add them in /admin/pipelines.
           </span>
         ) : (
-          eventPipelines.map((sp) => (
-            <Tab
-              key={sp.id}
-              active={subPipeline?.id === sp.id}
-              onClick={() => onScopeChange({ pipelineSlug: sp.slug })}
-              title={sp.name}
-            >
-              {sp.name}
-            </Tab>
-          ))
+          eventPipelines.map((sp) => {
+            const href = `/leads?view=board&event=${evSlug}&pipeline=${sp.slug}`;
+            return (
+              <TabLink
+                key={sp.id}
+                href={href}
+                active={subPipeline?.id === sp.id}
+              >
+                {sp.name}
+              </TabLink>
+            );
+          })
         )}
       </TabRow>
 
@@ -222,33 +228,30 @@ function TabRow({
   );
 }
 
-function Tab({
+function TabLink({
+  href,
   active,
-  onClick,
-  title,
   children,
 }: {
+  href: string;
   active: boolean;
-  onClick: () => void;
-  title?: string;
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
+    <Link
+      href={href}
+      scroll={false}
       role="tab"
       aria-selected={active}
-      onClick={onClick}
-      title={title}
       className={cn(
-        "inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+        "inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer",
         active
           ? "bg-brand-50 text-brand-700 ring-1 ring-brand-200"
           : "text-slate-600 hover:text-slate-900 hover:bg-slate-100",
       )}
     >
       {children}
-    </button>
+    </Link>
   );
 }
 
