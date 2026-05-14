@@ -140,7 +140,6 @@ function toPayload(form: FormState): LeadWritePayload {
 function validate(form: FormState): Partial<Record<keyof FormState, string>> {
   const errors: Partial<Record<keyof FormState, string>> = {};
   if (!form.full_name.trim()) errors.full_name = "Required.";
-  if (!form.phone.trim()) errors.phone = "Required.";
   if (!form.event_interest) errors.event_interest = "Pick an event.";
   if (!form.sub_pipeline) errors.sub_pipeline = "Pick a sub-pipeline.";
   if (form.deal_value && Number.isNaN(Number(form.deal_value))) {
@@ -360,20 +359,19 @@ export function LeadForm({
             autoComplete="off"
           />
           <Input
-            label="Phone *"
-            name="phone"
-            value={form.phone}
-            onChange={(e) => set("phone", e.target.value)}
-            error={errors.phone}
-            placeholder="+91…"
-            autoComplete="off"
-          />
-          <Input
             label="Email"
             name="email"
             type="email"
             value={form.email}
             onChange={(e) => set("email", e.target.value)}
+            autoComplete="off"
+          />
+          <Input
+            label="Phone"
+            name="phone"
+            value={form.phone}
+            onChange={(e) => set("phone", e.target.value)}
+            placeholder="+91…"
             autoComplete="off"
           />
           <Input

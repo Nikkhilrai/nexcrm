@@ -172,9 +172,9 @@ class ContactViewSet(viewsets.ModelViewSet):
         """POST /api/contacts/bulk-upload/[?dry_run=1] — multipart `.xlsx` upload.
 
         Expected columns (case-insensitive, in any order):
-        Phone (required), Name, Email, Company, Designation, LinkedIn URL, Source.
+        Email (required), Name, Phone, Company, Designation, LinkedIn URL, Source.
 
-        Returns {imported: N, skipped: [{row, reason, phone?}], preview: [...]}.
+        Returns {imported: N, skipped: [{row, reason, email?}], preview: [...]}.
         `preview` echoes the rows that were (or would be, in dry-run) imported
         so the admin can sanity-check before committing.
 
@@ -207,11 +207,13 @@ class ContactViewSet(viewsets.ModelViewSet):
             raise ValidationError({"file": "Workbook is empty."})
 
         col_map = _resolve_header_columns(header_row)
-        if "phone" not in col_map:
-            raise ValidationError({"file": "Missing required 'Phone' column in the header row."})
+        if "email" not in col_map:
+            raise ValidationError({"file": "Missing required 'Email' column in the header row."})
 
         source_lookup = _build_source_lookup()
-        existing_phones = set(Contact.objects.values_list("phone", flat=True))
+        existing_emails = set(
+            Contact.objects.exclude(email__isnull=True).exclude(email="").values_list("email", flat=True)
+        )
         seen_in_file: set[str] = set()
 
         imported_payload = []
@@ -221,34 +223,32 @@ class ContactViewSet(viewsets.ModelViewSet):
             if row is None or all(v is None or (isinstance(v, str) and not v.strip()) for v in row):
                 continue  # blank line — skip silently
 
+            email = (_cell(row, col_map.get("email")) or "").strip().lower()
+            if not email:
+                skipped.append({"row": offset, "reason": "Missing email."})
+                continue
+            if email in seen_in_file:
+                skipped.append({"row": offset, "email": email, "reason": "Duplicate email within this file."})
+                continue
+            if email in existing_emails:
+                skipped.append({"row": offset, "email": email, "reason": "Email already exists in contacts."})
+                continue
+
+            # Phone is optional — normalize when present but don't reject when absent.
             raw_phone = _cell(row, col_map.get("phone"))
             phone = _normalize_phone(raw_phone)
-            if not phone:
-                skipped.append({"row": offset, "reason": "Missing phone."})
-                continue
-            if not _looks_like_phone(phone):
-                skipped.append({"row": offset, "phone": phone, "reason": "Phone is corrupted (not a real number)."})
-                continue
-            if phone in seen_in_file:
-                skipped.append({"row": offset, "phone": phone, "reason": "Duplicate phone within this file."})
-                continue
-            if phone in existing_phones:
-                skipped.append({"row": offset, "phone": phone, "reason": "Phone already exists in contacts."})
-                continue
+            if phone and not _looks_like_phone(phone):
+                phone = ""  # corrupted phone — import the row anyway, just blank phone
 
-            # Email and LinkedIn are imported as-is — even if they look junk.
-            # Admin can clean them up later from the contact's detail view.
-            email = (_cell(row, col_map.get("email")) or "").strip()
             linkedin = (_cell(row, col_map.get("linkedin_url")) or "").strip()
-
             source_raw = (_cell(row, col_map.get("source")) or "").strip()
             source = source_lookup.get(source_raw.lower(), Contact._meta.get_field("source").default)
 
             imported_payload.append(
                 Contact(
-                    phone=phone,
-                    full_name=(_cell(row, col_map.get("full_name")) or "").strip()[:200],
                     email=email,
+                    phone=phone or "",
+                    full_name=(_cell(row, col_map.get("full_name")) or "").strip()[:200],
                     company=(_cell(row, col_map.get("company")) or "").strip()[:200],
                     designation=(_cell(row, col_map.get("designation")) or "").strip()[:200],
                     linkedin_url=linkedin,
@@ -256,7 +256,7 @@ class ContactViewSet(viewsets.ModelViewSet):
                     created_by=request.user,
                 )
             )
-            seen_in_file.add(phone)
+            seen_in_file.add(email)
 
         dry_run = str(request.query_params.get("dry_run", "")).lower() in {"1", "true", "yes"}
         if imported_payload and not dry_run:
@@ -264,9 +264,9 @@ class ContactViewSet(viewsets.ModelViewSet):
 
         preview = [
             {
+                "email": c.email,
                 "phone": c.phone,
                 "full_name": c.full_name,
-                "email": c.email,
                 "company": c.company,
                 "designation": c.designation,
                 "linkedin_url": c.linkedin_url,
@@ -302,18 +302,18 @@ class ContactViewSet(viewsets.ModelViewSet):
         wb = Workbook()
         ws = wb.active
         ws.title = "Contacts"
-        ws.append(["Phone", "Name", "Email", "Company", "Designation", "LinkedIn URL", "Source"])
+        ws.append(["Email", "Name", "Phone", "Company", "Designation", "LinkedIn URL", "Source"])
         ws.append([
-            "+919876543210",
-            "Aanya Sharma",
             "aanya@example.com",
+            "Aanya Sharma",
+            "+919876543210",
             "Sharma & Co.",
             "Managing Partner",
             "https://www.linkedin.com/in/aanya-sharma/",
             "LinkedIn",
         ])
         ws.append([
-            "+971501234567",
+            "omar@khanlegal.com",
             "Omar Khan",
             "",
             "Khan Legal Advisory",
@@ -322,7 +322,7 @@ class ContactViewSet(viewsets.ModelViewSet):
             "Referral",
         ])
         # Width tweaks so the headers don't truncate when the admin opens it.
-        widths = {"A": 18, "B": 22, "C": 26, "D": 24, "E": 24, "F": 36, "G": 14}
+        widths = {"A": 28, "B": 22, "C": 18, "D": 24, "E": 24, "F": 36, "G": 14}
         for col, w in widths.items():
             ws.column_dimensions[col].width = w
         # Bold the header row so it's obvious which row is required.

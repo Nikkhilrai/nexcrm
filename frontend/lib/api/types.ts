@@ -328,8 +328,8 @@ export type ContactWritePayload = Partial<
 export interface BulkUploadSkippedRow {
   /** 1-indexed sheet row (matches what the admin sees in Excel). */
   row: number;
-  /** Normalized phone, when extractable. Omitted when phone was missing. */
-  phone?: string;
+  /** Email, when extractable. Omitted when email was missing. */
+  email?: string;
   reason: string;
 }
 

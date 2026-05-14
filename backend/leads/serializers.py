@@ -305,18 +305,18 @@ class LeadDetailSerializer(serializers.ModelSerializer):
 
 
 def _ensure_contact_for_lead(lead: Lead, actor) -> None:
-    """Auto-grow the Contacts DB when a Lead is saved with a phone we
-    haven't seen. If the phone already maps to a Contact, do nothing
+    """Auto-grow the Contacts DB when a Lead is saved with an email we
+    haven't seen. If the email already maps to a Contact, do nothing
     (snapshot semantics — the master Contact stays canonical).
     """
-    phone = (lead.phone or "").strip()
-    if not phone:
+    email = (lead.email or "").strip() or None
+    if not email:
         return
     Contact.objects.get_or_create(
-        phone=phone,
+        email=email,
         defaults={
             "full_name": lead.full_name or "",
-            "email": lead.email or "",
+            "phone": lead.phone or "",
             "company": lead.company or "",
             "designation": lead.designation or "",
             "linkedin_url": lead.linkedin_url or "",

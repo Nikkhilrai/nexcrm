@@ -115,7 +115,7 @@ export default function AdminImportPage() {
           <h1 className="text-3xl text-ink-900">Import contacts</h1>
           <p className="text-sm text-slate-600">
             Drop a .xlsx of contacts, preview what will be imported, then confirm.
-            Phone is required; everything else is optional. Phones already in the
+            Email is required; everything else is optional. Emails already in the
             contacts database are skipped automatically.
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function AdminImportPage() {
                     Drop a .xlsx file here, or click to choose
                   </p>
                   <p className="text-xs text-slate-500">
-                    Columns: Phone (required), Name, Email, Company, Designation, LinkedIn URL, Source
+                    Columns: Email (required), Name, Phone, Company, Designation, LinkedIn URL, Source
                   </p>
                 </>
               )}
@@ -250,29 +250,31 @@ function PreviewSummary({
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wide">
               <tr>
-                <th className="text-left font-semibold px-4 py-2.5 w-44">Phone</th>
+                <th className="text-left font-semibold px-4 py-2.5">Email</th>
                 <th className="text-left font-semibold px-4 py-2.5">Name</th>
+                <th className="text-left font-semibold px-4 py-2.5 w-44">Phone</th>
                 <th className="text-left font-semibold px-4 py-2.5">Company</th>
                 <th className="text-left font-semibold px-4 py-2.5">Designation</th>
-                <th className="text-left font-semibold px-4 py-2.5">Email</th>
                 <th className="text-left font-semibold px-4 py-2.5 w-24">Source</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {data.preview.map((row, idx) => (
-                <tr key={`${row.phone}-${idx}`} className="hover:bg-slate-50">
-                  <td className="px-4 py-2.5 font-mono text-xs text-slate-700">{row.phone}</td>
+                <tr key={`${row.email}-${idx}`} className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5 text-slate-700 truncate max-w-xs">
+                    {row.email || <span className="text-slate-400 italic">—</span>}
+                  </td>
                   <td className="px-4 py-2.5 text-ink-900">
                     {row.full_name || <span className="text-slate-400 italic">—</span>}
+                  </td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-slate-700">
+                    {row.phone || <span className="text-slate-400 italic">—</span>}
                   </td>
                   <td className="px-4 py-2.5 text-slate-700">
                     {row.company || <span className="text-slate-400 italic">—</span>}
                   </td>
                   <td className="px-4 py-2.5 text-slate-700">
                     {row.designation || <span className="text-slate-400 italic">—</span>}
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-700 truncate max-w-xs">
-                    {row.email || <span className="text-slate-400 italic">—</span>}
                   </td>
                   <td className="px-4 py-2.5 text-xs text-slate-500">{row.source}</td>
                 </tr>
@@ -499,11 +501,11 @@ function ContactsDirectory({ reloadKey }: { reloadKey: number }) {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-left font-semibold px-4 py-2.5 w-44">Phone</th>
+                  <th className="text-left font-semibold px-4 py-2.5">Email</th>
                   <th className="text-left font-semibold px-4 py-2.5">Name</th>
+                  <th className="text-left font-semibold px-4 py-2.5 w-44">Phone</th>
                   <th className="text-left font-semibold px-4 py-2.5">Company</th>
                   <th className="text-left font-semibold px-4 py-2.5">Designation</th>
-                  <th className="text-left font-semibold px-4 py-2.5">Email</th>
                   <th className="text-left font-semibold px-4 py-2.5 w-24">Source</th>
                   <th className="w-16 px-4 py-2.5" aria-label="Actions" />
                 </tr>
@@ -511,18 +513,20 @@ function ContactsDirectory({ reloadKey }: { reloadKey: number }) {
               <tbody className="divide-y divide-slate-100">
                 {rows.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-2.5 font-mono text-xs text-slate-700">{c.phone}</td>
+                    <td className="px-4 py-2.5 text-slate-700 truncate max-w-xs">
+                      {c.email || <span className="text-slate-400 italic">—</span>}
+                    </td>
                     <td className="px-4 py-2.5 text-ink-900">
                       {c.full_name || <span className="text-slate-400 italic">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-slate-700">
+                      {c.phone || <span className="text-slate-400 italic">—</span>}
                     </td>
                     <td className="px-4 py-2.5 text-slate-700">
                       {c.company || <span className="text-slate-400 italic">—</span>}
                     </td>
                     <td className="px-4 py-2.5 text-slate-700">
                       {c.designation || <span className="text-slate-400 italic">—</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-slate-700 truncate max-w-xs">
-                      {c.email || <span className="text-slate-400 italic">—</span>}
                     </td>
                     <td className="px-4 py-2.5 text-xs text-slate-500">{c.source}</td>
                     <td className="px-4 py-2.5 text-right">
@@ -619,7 +623,7 @@ function SkippedTable({
         <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wide">
           <tr>
             <th className="text-left font-semibold px-4 py-2.5 w-20">Row</th>
-            <th className="text-left font-semibold px-4 py-2.5 w-44">Phone</th>
+            <th className="text-left font-semibold px-4 py-2.5">Email</th>
             <th className="text-left font-semibold px-4 py-2.5">Reason</th>
           </tr>
         </thead>
@@ -627,8 +631,8 @@ function SkippedTable({
           {skipped.map((row, idx) => (
             <tr key={`${row.row}-${idx}`} className="hover:bg-slate-50">
               <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{row.row}</td>
-              <td className="px-4 py-2.5 font-mono text-xs text-slate-700">
-                {row.phone ?? <span className="text-slate-400 italic">—</span>}
+              <td className="px-4 py-2.5 text-xs text-slate-700">
+                {row.email ?? <span className="text-slate-400 italic">—</span>}
               </td>
               <td className="px-4 py-2.5 text-slate-700">{row.reason}</td>
             </tr>

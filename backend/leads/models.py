@@ -84,7 +84,7 @@ class Lead(models.Model):
     # Contact
     full_name = models.CharField(max_length=200)
     email = models.EmailField(blank=True)
-    phone = models.CharField(max_length=32, db_index=True)
+    phone = models.CharField(max_length=32, blank=True, db_index=True)
     company = models.CharField(max_length=200, blank=True)
     designation = models.CharField(max_length=200, blank=True)
     linkedin_url = models.URLField(blank=True)
@@ -230,8 +230,8 @@ class Contact(models.Model):
 
     id = models.BigAutoField(primary_key=True)
     full_name = models.CharField(max_length=200, blank=True)
-    phone = models.CharField(max_length=32, unique=True, db_index=True)
-    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=32, blank=True, db_index=True)
+    email = models.EmailField(blank=True, null=True, unique=True)
     company = models.CharField(max_length=200, blank=True)
     designation = models.CharField(max_length=200, blank=True)
     linkedin_url = models.URLField(blank=True)
