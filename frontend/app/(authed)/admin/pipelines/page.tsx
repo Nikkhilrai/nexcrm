@@ -166,7 +166,7 @@ export default function AdminPipelinesPage() {
   async function handleVisibilityChange(ev: ApiEvent, userIds: number[]) {
     setBusy(`visibility-${ev.id}`);
     try {
-      await api.events.update(ev.id, { visible_to: userIds });
+      await api.events.update(ev.id, { hidden_from: userIds });
       load();
     } catch {
       window.alert("Couldn't update event visibility.");
@@ -369,7 +369,7 @@ function EventCard({
       </div>
 
       <VisibilityRow
-        assignedUsers={event.visible_to_users}
+        blockedUsers={event.hidden_from_users}
         allUsers={allUsers}
         busy={busyId === `visibility-${event.id}`}
         onVisibilityChange={onVisibilityChange}
@@ -553,52 +553,52 @@ function SubPipelineRow({
 /* ─── Visibility row ─────────────────────────────────────────────────── */
 
 function VisibilityRow({
-  assignedUsers,
+  blockedUsers,
   allUsers,
   busy,
   onVisibilityChange,
 }: {
-  assignedUsers: EventVisibilityUser[];
+  blockedUsers: EventVisibilityUser[];
   allUsers: AdminUser[];
   busy: boolean;
   onVisibilityChange: (userIds: number[]) => void;
 }) {
-  const assignedIds = new Set(assignedUsers.map((u) => u.id));
+  const blockedIds = new Set(blockedUsers.map((u) => u.id));
   // Only non-admin active users appear in the picker — admins always see everything.
   const available = allUsers.filter(
-    (u) => u.role !== "ADMIN" && u.is_active && !assignedIds.has(u.id),
+    (u) => u.role !== "ADMIN" && u.is_active && !blockedIds.has(u.id),
   );
 
-  function remove(userId: number) {
-    onVisibilityChange(assignedUsers.filter((u) => u.id !== userId).map((u) => u.id));
+  function unblock(userId: number) {
+    onVisibilityChange(blockedUsers.filter((u) => u.id !== userId).map((u) => u.id));
   }
 
-  function add(userId: number) {
-    onVisibilityChange([...assignedUsers.map((u) => u.id), userId]);
+  function block(userId: number) {
+    onVisibilityChange([...blockedUsers.map((u) => u.id), userId]);
   }
 
   return (
     <div className="px-6 py-2.5 border-b border-slate-100 flex items-center gap-2 flex-wrap bg-slate-50/60">
       <span className="text-xs font-medium text-slate-500 shrink-0 inline-flex items-center gap-1.5">
         <Users className="w-3.5 h-3.5" />
-        Visible to
+        Restricted from
       </span>
 
-      {assignedUsers.length === 0 ? (
-        <span className="text-xs text-slate-400 italic">All users — unrestricted</span>
+      {blockedUsers.length === 0 ? (
+        <span className="text-xs text-slate-400 italic">No restrictions — all users can see this event</span>
       ) : (
-        assignedUsers.map((u) => (
+        blockedUsers.map((u) => (
           <span
             key={u.id}
-            className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 ring-1 ring-brand-200 text-xs px-2 py-0.5 rounded-full"
+            className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 ring-1 ring-rose-200 text-xs px-2 py-0.5 rounded-full"
           >
             {u.username}
             <button
               type="button"
-              onClick={() => remove(u.id)}
+              onClick={() => unblock(u.id)}
               disabled={busy}
-              className="hover:text-rose-500 disabled:opacity-40 leading-none"
-              aria-label={`Remove ${u.username}`}
+              className="hover:text-rose-900 disabled:opacity-40 leading-none"
+              aria-label={`Unblock ${u.username}`}
             >
               <X className="w-3 h-3" />
             </button>
@@ -609,18 +609,18 @@ function VisibilityRow({
       {available.length > 0 && (
         <select
           value=""
-          onChange={(e) => { if (e.target.value) add(Number(e.target.value)); }}
+          onChange={(e) => { if (e.target.value) block(Number(e.target.value)); }}
           disabled={busy}
           className="text-xs border border-slate-200 rounded px-2 py-0.5 text-slate-600 bg-white cursor-pointer disabled:opacity-40 hover:border-slate-300"
         >
-          <option value="">+ Add user…</option>
+          <option value="">+ Restrict user…</option>
           {available.map((u) => (
             <option key={u.id} value={u.id}>{u.username}</option>
           ))}
         </select>
       )}
 
-      {assignedUsers.length > 0 && (
+      {blockedUsers.length > 0 && (
         <button
           type="button"
           onClick={() => onVisibilityChange([])}
@@ -628,7 +628,7 @@ function VisibilityRow({
           className="text-xs text-slate-400 hover:text-slate-600 disabled:opacity-40 ml-auto"
           title="Remove all restrictions — make event visible to everyone"
         >
-          Clear restrictions
+          Clear all
         </button>
       )}
     </div>

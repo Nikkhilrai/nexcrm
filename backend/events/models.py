@@ -14,13 +14,13 @@ class Event(models.Model):
         default=True,
         help_text="Inactive events are hidden from new-lead dropdowns but still attached to historical leads.",
     )
-    # Empty = visible to everyone (existing behaviour).
-    # Non-empty = only these users (+ all admins) can see this event.
-    visible_to = models.ManyToManyField(
+    # Empty = visible to everyone (default).
+    # Non-empty = these users CANNOT see this event. Admins always see all events.
+    hidden_from = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         blank=True,
-        related_name="visible_events",
-        help_text="Users who can see this event. Empty means unrestricted. Admins always see all events.",
+        related_name="hidden_events",
+        help_text="Users blocked from seeing this event. Empty means unrestricted. Admins always see all events.",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

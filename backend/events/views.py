@@ -44,7 +44,7 @@ class EventViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
-        qs = accessible_events(self.request.user).prefetch_related("visible_to")
+        qs = accessible_events(self.request.user).prefetch_related("hidden_from")
         if self.request.query_params.get("active_only", "").lower() == "true":
             qs = qs.filter(is_active=True)
         if self._wants_pipelines():

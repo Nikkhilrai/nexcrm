@@ -103,18 +103,18 @@ export interface Event {
   start_date: string;
   end_date: string;
   is_active: boolean;
-  /** Users explicitly granted access. Empty array = unrestricted (visible to all). */
-  visible_to_users: EventVisibilityUser[];
+  /** Users blocked from seeing this event. Empty array = unrestricted (visible to all). */
+  hidden_from_users: EventVisibilityUser[];
 }
 
-export type EventWritePayload = Partial<Omit<Event, "id" | "visible_to_users">> & {
+export type EventWritePayload = Partial<Omit<Event, "id" | "hidden_from_users">> & {
   name?: string;
   city?: string;
   country?: string;
   start_date?: string;
   end_date?: string;
-  /** List of user IDs to grant access. Empty array = unrestricted. */
-  visible_to?: number[];
+  /** List of user IDs to block from this event. Empty array = unrestricted. */
+  hidden_from?: number[];
 };
 
 // ─── SubPipeline (Phase 2.9) ───────────────────────────────

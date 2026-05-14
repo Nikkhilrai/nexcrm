@@ -7,16 +7,16 @@ from .models import Event
 
 
 class EventSerializer(serializers.ModelSerializer):
-    # Write-only: admin sends a list of user PKs to set visibility.
-    # Omitting the field on a PATCH leaves the current assignment unchanged.
-    visible_to = serializers.PrimaryKeyRelatedField(
+    # Write-only: admin sends a list of user PKs to block from this event.
+    # Omitting the field on a PATCH leaves the current blocklist unchanged.
+    hidden_from = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=get_user_model()._default_manager.all(),
         required=False,
         write_only=True,
     )
     # Read-only: returns [{id, username, role}] so the admin UI can render names.
-    visible_to_users = serializers.SerializerMethodField()
+    hidden_from_users = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
@@ -28,21 +28,21 @@ class EventSerializer(serializers.ModelSerializer):
             "start_date",
             "end_date",
             "is_active",
-            "visible_to",
-            "visible_to_users",
+            "hidden_from",
+            "hidden_from_users",
         )
 
-    def get_visible_to_users(self, obj: Event):
+    def get_hidden_from_users(self, obj: Event):
         return [
             {"id": u.id, "username": u.username, "role": u.role}
-            for u in obj.visible_to.all()
+            for u in obj.hidden_from.all()
         ]
 
     def update(self, instance, validated_data):
-        visible_to = validated_data.pop("visible_to", None)
+        hidden_from = validated_data.pop("hidden_from", None)
         instance = super().update(instance, validated_data)
-        if visible_to is not None:
-            instance.visible_to.set(visible_to)
+        if hidden_from is not None:
+            instance.hidden_from.set(hidden_from)
         return instance
 
 
