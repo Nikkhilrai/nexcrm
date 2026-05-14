@@ -37,10 +37,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     [user?.role],
   );
 
-  // /admin/users should win over /admin when both prefixes match.
+  // Longest prefix wins (e.g. /admin/email- beats /admin, /admin/users beats /admin).
   const activeHref = useMemo(() => {
     const matches = visibleItems
-      .filter((i) => pathname === i.matchPrefix || pathname.startsWith(`${i.matchPrefix}/`))
+      .filter((i) => pathname.startsWith(i.matchPrefix))
       .sort((a, b) => b.matchPrefix.length - a.matchPrefix.length);
     return matches[0]?.href ?? null;
   }, [pathname, visibleItems]);
