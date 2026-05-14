@@ -4,7 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, BarChart3, Users, Inbox, Workflow, Upload, Mail, Settings } from "lucide-react";
+import { LogOut, BarChart3, Users, Inbox, Workflow, Upload, Mail } from "lucide-react";
 
 import { Badge, Button } from "@/components/ui";
 import { useAuth } from "@/lib/auth/context";
@@ -26,7 +26,6 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/import", label: "Import", icon: <Upload className="w-4 h-4" />, matchPrefix: "/admin/import", adminOnly: true },
   { href: "/admin/email-queue", label: "Emails", icon: <Mail className="w-4 h-4" />, matchPrefix: "/admin/email-", adminOnly: true },
   { href: "/admin/users", label: "Users", icon: <Users className="w-4 h-4" />, matchPrefix: "/admin/users", adminOnly: true },
-  { href: "/settings", label: "Settings", icon: <Settings className="w-4 h-4" />, matchPrefix: "/settings" },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
