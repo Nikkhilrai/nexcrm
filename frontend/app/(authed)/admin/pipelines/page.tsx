@@ -578,26 +578,26 @@ function VisibilityRow({
   }
 
   return (
-    <div className="px-6 py-2.5 border-b border-slate-100 flex items-center gap-2 flex-wrap bg-slate-50/60">
-      <span className="text-xs font-medium text-slate-500 shrink-0 inline-flex items-center gap-1.5">
+    <div className="px-6 py-3 border-b border-slate-200 flex items-center gap-2 flex-wrap bg-amber-50">
+      <span className="text-xs font-semibold text-amber-800 shrink-0 inline-flex items-center gap-1.5">
         <Users className="w-3.5 h-3.5" />
         Restricted from
       </span>
 
-      {blockedUsers.length === 0 ? (
-        <span className="text-xs text-slate-400 italic">No restrictions — all users can see this event</span>
+      {(blockedUsers ?? []).length === 0 ? (
+        <span className="text-xs text-amber-600 italic">No restrictions — all users can see this event</span>
       ) : (
-        blockedUsers.map((u) => (
+        (blockedUsers ?? []).map((u) => (
           <span
             key={u.id}
-            className="inline-flex items-center gap-1 bg-rose-50 text-rose-700 ring-1 ring-rose-200 text-xs px-2 py-0.5 rounded-full"
+            className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 ring-1 ring-rose-300 text-xs px-2 py-0.5 rounded-full font-medium"
           >
             {u.username}
             <button
               type="button"
               onClick={() => unblock(u.id)}
               disabled={busy}
-              className="hover:text-rose-900 disabled:opacity-40 leading-none"
+              className="hover:text-rose-900 disabled:opacity-40 leading-none ml-0.5"
               aria-label={`Unblock ${u.username}`}
             >
               <X className="w-3 h-3" />
@@ -611,7 +611,7 @@ function VisibilityRow({
           value=""
           onChange={(e) => { if (e.target.value) block(Number(e.target.value)); }}
           disabled={busy}
-          className="text-xs border border-slate-200 rounded px-2 py-0.5 text-slate-600 bg-white cursor-pointer disabled:opacity-40 hover:border-slate-300"
+          className="text-xs border border-amber-300 rounded px-2 py-0.5 text-amber-900 bg-white cursor-pointer disabled:opacity-40 hover:border-amber-400"
         >
           <option value="">+ Restrict user…</option>
           {available.map((u) => (
@@ -620,12 +620,12 @@ function VisibilityRow({
         </select>
       )}
 
-      {blockedUsers.length > 0 && (
+      {(blockedUsers ?? []).length > 0 && (
         <button
           type="button"
           onClick={() => onVisibilityChange([])}
           disabled={busy}
-          className="text-xs text-slate-400 hover:text-slate-600 disabled:opacity-40 ml-auto"
+          className="text-xs text-amber-600 hover:text-amber-900 disabled:opacity-40 ml-auto underline underline-offset-2"
           title="Remove all restrictions — make event visible to everyone"
         >
           Clear all
