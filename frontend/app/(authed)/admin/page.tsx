@@ -12,6 +12,7 @@ import {
 
 import { KpiGrid } from "./components/KpiGrid";
 import { Charts } from "./components/Charts";
+import { RecentLeads } from "./components/RecentLeads";
 import { UserActivityTable } from "./components/UserActivityTable";
 
 function currentYearMonth(): string {
@@ -92,6 +93,7 @@ export default function AdminPage() {
         <>
           <KpiGrid kpis={overview.kpis} />
           <Charts data={overview} />
+          <RecentLeads leads={overview.recent_leads} monthLabel={overview.kpis.month_label} />
           <UserActivityTable
             rows={activity}
             monthLabel={overview.kpis.month_label}

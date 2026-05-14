@@ -412,11 +412,22 @@ export interface DashboardKpis {
   avg_conversion_days: number | null;
 }
 
+export interface DashboardRecentLead {
+  id: string;
+  full_name: string;
+  company: string;
+  status: LeadStatus;
+  sub_pipeline_name: string;
+  assigned_to_username: string;
+  created_at: string;
+}
+
 export interface DashboardPayload {
   kpis: DashboardKpis;
   leads_by_status: { status: LeadStatus; count: number }[];
   leads_by_event: { event_id: number; city: string; count: number }[];
   conversions_by_day: { day: string; count: number }[];
+  recent_leads: DashboardRecentLead[];
 }
 
 export interface UserActivityRow {

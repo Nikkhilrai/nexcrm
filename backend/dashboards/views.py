@@ -149,6 +149,26 @@ class DashboardView(APIView):
         import calendar as _cal
         month_label = f"{_cal.month_name[month_start.month]} {month_start.year}"
 
+        recent_leads_qs = (
+            Lead.objects.filter(
+                created_at__gte=month_start, created_at__lte=month_end
+            )
+            .select_related("assigned_to", "sub_pipeline")
+            .order_by("-created_at")[:8]
+        )
+        recent_leads = [
+            {
+                "id": str(l.id),
+                "full_name": l.full_name,
+                "company": l.company or "",
+                "status": l.status,
+                "sub_pipeline_name": l.sub_pipeline.name if l.sub_pipeline else "",
+                "assigned_to_username": l.assigned_to.username if l.assigned_to else "",
+                "created_at": l.created_at.isoformat(),
+            }
+            for l in recent_leads_qs
+        ]
+
         return Response({
             "kpis": {
                 "month_label": month_label,
@@ -161,6 +181,7 @@ class DashboardView(APIView):
             "leads_by_status": leads_by_status,
             "leads_by_event": leads_by_event,
             "conversions_by_day": conversions_by_day,
+            "recent_leads": recent_leads,
         })
 
 
