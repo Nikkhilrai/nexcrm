@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, CalendarDays } from "lucide-react";
 
 import { Spinner } from "@/components/ui";
 import { useAuth } from "@/lib/auth/context";
@@ -122,9 +122,10 @@ export default function LeadEditPage({
             </p>
           )}
           {lead && (
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-sm">
+              <CalendarDays className="w-4 h-4 text-slate-400" />
               Created on{" "}
-              <span className="font-medium text-slate-700">
+              <span className="font-semibold text-slate-800">
                 {new Date(lead.created_at).toLocaleDateString("en-IN", {
                   day: "numeric",
                   month: "short",
