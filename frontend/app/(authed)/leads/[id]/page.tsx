@@ -121,6 +121,16 @@ export default function LeadEditPage({
               {lead.company || "—"} · {lead.phone}
             </p>
           )}
+          {lead && (
+            <p className="text-xs text-slate-400 mt-1">
+              Lead created on{" "}
+              {new Date(lead.created_at).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
+          )}
         </div>
 
         {user?.role === "ADMIN" && lead && (
