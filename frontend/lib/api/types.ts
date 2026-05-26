@@ -17,7 +17,9 @@ export type LeadStatus =
   | "LEAD_ASSIGNED"
   | "NOT_CONNECTED"
   | "CALL_CONNECTED"
+  | "CALL_SCHEDULE"
   | "INFO_SENT"
+  | "FORM_SENT"
   | "PROPOSAL_SENT"
   | "FOLLOWUP_1"
   | "FOLLOWUP_2"
@@ -32,7 +34,9 @@ export const LEAD_STATUSES: readonly LeadStatus[] = [
   "LEAD_ASSIGNED",
   "NOT_CONNECTED",
   "CALL_CONNECTED",
+  "CALL_SCHEDULE",
   "INFO_SENT",
+  "FORM_SENT",
   "PROPOSAL_SENT",
   "FOLLOWUP_1",
   "FOLLOWUP_2",
