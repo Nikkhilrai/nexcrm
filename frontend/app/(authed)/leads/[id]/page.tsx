@@ -122,13 +122,15 @@ export default function LeadEditPage({
             </p>
           )}
           {lead && (
-            <p className="text-xs text-slate-400 mt-1">
-              Lead created on{" "}
-              {new Date(lead.created_at).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
+            <p className="text-sm text-slate-500 mt-1">
+              Created on{" "}
+              <span className="font-medium text-slate-700">
+                {new Date(lead.created_at).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
             </p>
           )}
         </div>
