@@ -27,7 +27,8 @@ export type LeadStatus =
   | "INVOICE_SENT"
   | "DEAL_WON"
   | "DEAL_LOST"
-  | "DECLINED";
+  | "DECLINED"
+  | "NOT_QUALIFIED";
 
 /** Ordered as the kanban columns + funnel chart should render. */
 export const LEAD_STATUSES: readonly LeadStatus[] = [
@@ -45,6 +46,7 @@ export const LEAD_STATUSES: readonly LeadStatus[] = [
   "DEAL_WON",
   "DEAL_LOST",
   "DECLINED",
+  "NOT_QUALIFIED",
 ] as const;
 
 export type LeadSource =

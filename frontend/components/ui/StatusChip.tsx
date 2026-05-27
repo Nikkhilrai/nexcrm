@@ -18,6 +18,7 @@ const STATUS_TONE: Record<LeadStatus, BadgeTone> = {
   DEAL_WON: "emerald",
   DEAL_LOST: "rose",
   DECLINED: "neutral",
+  NOT_QUALIFIED: "orange",
 };
 
 export const STATUS_LABEL: Record<LeadStatus, string> = {
@@ -35,6 +36,7 @@ export const STATUS_LABEL: Record<LeadStatus, string> = {
   DEAL_WON: "Deal Won",
   DEAL_LOST: "Deal Lost",
   DECLINED: "Declined",
+  NOT_QUALIFIED: "Not Qualified",
 };
 
 export function StatusChip({ status }: { status: LeadStatus }) {

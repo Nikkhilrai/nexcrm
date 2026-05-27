@@ -80,6 +80,7 @@ class Lead(models.Model):
         DEAL_WON = "DEAL_WON", "Deal Won"
         DEAL_LOST = "DEAL_LOST", "Deal Lost"
         DECLINED = "DECLINED", "Declined"
+        NOT_QUALIFIED = "NOT_QUALIFIED", "Not Qualified"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
