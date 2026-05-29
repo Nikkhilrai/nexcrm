@@ -75,6 +75,7 @@ export function KanbanBoard({ leads, onMove }: KanbanBoardProps) {
       DEAL_LOST: [],
       DECLINED: [],
       NOT_QUALIFIED: [],
+      FORM_RECEIVED: [],
     };
     for (const l of leads) {
       map[l.status].push(l);

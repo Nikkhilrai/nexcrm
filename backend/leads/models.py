@@ -81,6 +81,7 @@ class Lead(models.Model):
         DEAL_LOST = "DEAL_LOST", "Deal Lost"
         DECLINED = "DECLINED", "Declined"
         NOT_QUALIFIED = "NOT_QUALIFIED", "Not Qualified"
+        FORM_RECEIVED = "FORM_RECEIVED", "Form Received"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
