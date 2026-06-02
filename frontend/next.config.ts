@@ -9,11 +9,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*/",
-        destination: "http://8.231.72.255/api/:path*/",
+        destination: "http://8.231.104.94/api/:path*/",
       },
       {
         source: "/api/:path*",
-        destination: "http://8.231.72.255/api/:path*/",
+        destination: "http://8.231.104.94/api/:path*/",
       },
     ];
   },
