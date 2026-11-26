@@ -29,10 +29,13 @@ from .serializers import (
 class LeadCursorPagination(CursorPagination):
     """Cursor pagination on -created_at for the infinite-scroll table.
 
-    Page size is fixed at 25 — the home table loads 25 rows per scroll.
+    Default page size is 25 (the home table's infinite scroll). The kanban
+    board passes `?page_size=500` so a whole pipeline loads in one request.
     """
 
     page_size = 25
+    page_size_query_param = "page_size"
+    max_page_size = 500
     ordering = "-created_at"
 
 

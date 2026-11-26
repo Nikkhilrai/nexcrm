@@ -299,6 +299,8 @@ export interface LeadListParams {
   created_before?: string;
   next_followup_after?: string;
   next_followup_before?: string;
+  /** Default 25, server max 500. */
+  page_size?: number;
 }
 
 // ─── Tier API params ───────────────────────────────────────

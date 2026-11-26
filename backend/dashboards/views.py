@@ -1,8 +1,9 @@
 import calendar
+from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from rest_framework.response import Response
@@ -202,101 +203,115 @@ class UserActivityView(APIView):
         is_current_month = (month_start.year == now.year and month_start.month == now.month)
 
         users = list(User.objects.filter(role=User.Role.USER).order_by("username"))
-        rows = []
+        user_ids = [u.id for u in users]
 
-        for u in users:
-            calls_month = Interaction.objects.filter(
-                user=u,
-                type=Interaction.Type.CALL,
-                occurred_at__gte=month_start,
-                occurred_at__lte=month_end,
-            ).count()
-
-            emails_month = Interaction.objects.filter(
-                user=u,
-                type=Interaction.Type.EMAIL,
-                occurred_at__gte=month_start,
-                occurred_at__lte=month_end,
-            ).count()
-
-            interaction_leads = set(
-                Interaction.objects.filter(
-                    user=u,
-                    occurred_at__gte=month_start,
-                    occurred_at__lte=month_end,
-                ).values_list("lead", flat=True)
+        # Fixed number of grouped queries regardless of how many callers exist —
+        # each query is a round trip to Neon, so per-user loops were the cost.
+        interaction_month = Interaction.objects.filter(
+            user_id__in=user_ids,
+            occurred_at__gte=month_start,
+            occurred_at__lte=month_end,
+        )
+        interaction_counts = {
+            row["user"]: row
+            for row in interaction_month.order_by().values("user").annotate(
+                calls=Count("id", filter=Q(type=Interaction.Type.CALL)),
+                emails=Count("id", filter=Q(type=Interaction.Type.EMAIL)),
+                total=Count("id"),
             )
-            history_leads = set(
-                StatusHistory.objects.filter(
-                    changed_by=u,
-                    changed_at__gte=month_start,
-                    changed_at__lte=month_end,
-                ).values_list("lead", flat=True)
+        }
+
+        touched: dict[int, set] = defaultdict(set)
+        for uid, lead_id in interaction_month.order_by().values_list("user", "lead").distinct():
+            touched[uid].add(lead_id)
+        for uid, lead_id in (
+            StatusHistory.objects.filter(
+                changed_by_id__in=user_ids,
+                changed_at__gte=month_start,
+                changed_at__lte=month_end,
             )
-            leads_touched_month = len(interaction_leads | history_leads)
+            .order_by()
+            .values_list("changed_by", "lead")
+            .distinct()
+        ):
+            touched[uid].add(lead_id)
 
-            interactions_month = Interaction.objects.filter(
-                user=u,
-                occurred_at__gte=month_start,
-                occurred_at__lte=month_end,
-            ).count()
-
-            # Leads assigned: how many leads were created this month for this user.
-            leads_assigned = Lead.objects.filter(
-                assigned_to=u,
+        # Leads assigned: how many leads were created this month for this user.
+        assigned_counts = dict(
+            Lead.objects.filter(
+                assigned_to_id__in=user_ids,
                 created_at__gte=month_start,
                 created_at__lte=month_end,
-            ).count()
+            )
+            .order_by()
+            .values("assigned_to")
+            .annotate(n=Count("id"))
+            .values_list("assigned_to", "n")
+        )
 
-            # Follow-ups due: live overdue count for current month only; null for past months.
-            if is_current_month:
-                followups_due = Lead.objects.filter(
-                    assigned_to=u, next_followup_at__lte=now
-                ).exclude(
+        # Follow-ups due: live overdue count for current month only; null for past months.
+        followup_counts = {}
+        if is_current_month:
+            followup_counts = dict(
+                Lead.objects.filter(assigned_to_id__in=user_ids, next_followup_at__lte=now)
+                .exclude(
                     status__in=(
                         Lead.Status.DEAL_WON,
                         Lead.Status.DEAL_LOST,
                         Lead.Status.DECLINED,
                     )
-                ).count()
-            else:
-                followups_due = None
-
-            won_lead_ids = list(
-                StatusHistory.objects.filter(
-                    changed_by=u,
-                    to_status=Lead.Status.DEAL_WON,
-                    changed_at__gte=month_start,
-                    changed_at__lte=month_end,
                 )
-                .values_list("lead", flat=True)
-                .distinct()
+                .order_by()
+                .values("assigned_to")
+                .annotate(n=Count("id"))
+                .values_list("assigned_to", "n")
             )
-            conversions_month = len(won_lead_ids)
-            won_qs = Lead.objects.filter(id__in=won_lead_ids)
-            revenue_month_inr = (
-                won_qs.filter(deal_currency="INR").aggregate(total=Sum("deal_value"))["total"]
-                or Decimal("0")
+
+        won_by_user: dict[int, set] = defaultdict(set)
+        for uid, lead_id in (
+            StatusHistory.objects.filter(
+                changed_by_id__in=user_ids,
+                to_status=Lead.Status.DEAL_WON,
+                changed_at__gte=month_start,
+                changed_at__lte=month_end,
             )
-            revenue_month_usd = (
-                won_qs.filter(deal_currency="USD").aggregate(total=Sum("deal_value"))["total"]
-                or Decimal("0")
+            .order_by()
+            .values_list("changed_by", "lead")
+            .distinct()
+        ):
+            won_by_user[uid].add(lead_id)
+        all_won_ids = set().union(*won_by_user.values()) if won_by_user else set()
+        won_deals = {
+            lead_id: (currency, value)
+            for lead_id, currency, value in Lead.objects.filter(id__in=all_won_ids).values_list(
+                "id", "deal_currency", "deal_value"
             )
+        }
+
+        rows = []
+        for u in users:
+            counts = interaction_counts.get(u.id, {})
+            won_ids = won_by_user.get(u.id, set())
+            revenue = {"INR": Decimal("0"), "USD": Decimal("0")}
+            for lead_id in won_ids:
+                currency, value = won_deals.get(lead_id, (None, None))
+                if value is not None and currency in revenue:
+                    revenue[currency] += value
 
             rows.append({
                 "user_id": u.id,
                 "username": u.username,
                 "full_name": (f"{u.first_name} {u.last_name}").strip() or u.username,
                 "is_active": u.is_active,
-                "calls_month": calls_month,
-                "emails_month": emails_month,
-                "leads_touched_month": leads_touched_month,
-                "interactions_month": interactions_month,
-                "followups_due": followups_due,
-                "leads_assigned": leads_assigned,
-                "conversions_month": conversions_month,
-                "revenue_month_inr": str(revenue_month_inr),
-                "revenue_month_usd": str(revenue_month_usd),
+                "calls_month": counts.get("calls", 0),
+                "emails_month": counts.get("emails", 0),
+                "leads_touched_month": len(touched.get(u.id, ())),
+                "interactions_month": counts.get("total", 0),
+                "followups_due": followup_counts.get(u.id, 0) if is_current_month else None,
+                "leads_assigned": assigned_counts.get(u.id, 0),
+                "conversions_month": len(won_ids),
+                "revenue_month_inr": str(revenue["INR"]),
+                "revenue_month_usd": str(revenue["USD"]),
             })
 
         return Response(rows)

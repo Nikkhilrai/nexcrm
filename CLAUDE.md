@@ -157,6 +157,13 @@ Fixed revenue calculation (was mixing INR + USD) and made the entire dashboard m
 - **Backend** — `_parse_month(request)` helper reads `?month=YYYY-MM` (stdlib `calendar.monthrange`). `DashboardView` splits revenue into `revenue_month_inr` + `revenue_month_usd`; `leads_by_status`, `leads_by_event`, and daily-conversion chart all filtered to the month window; `conversions_by_day` replaces the old rolling-30-day series. `UserActivityView` uses month-scoped counts for all activity fields (`calls_month`, `emails_month`, `leads_touched_month`, `interactions_month`); `leads_assigned` = leads created in the month; `followups_due` is `null` for past months (frontend hides the column entirely).
 - **Frontend** — `DashboardKpis` trimmed to month-only fields; `UserActivityRow` fields renamed to `_month` suffix. `KpiGrid.tsx` is a clean 4-tile grid (Leads, Conversions, Revenue ₹, Avg days to close). `UserActivityTable.tsx` hides the Follow-ups due column for past months. `admin/page.tsx` passes `isCurrentMonth` flag down.
 
+### 🔄 Performance pass (2026-11-26, 3/4)
+
+- `CONN_MAX_AGE` defaults to 600 (was 0 → a new TLS handshake to Neon on every request).
+- `/api/leads/` accepts `?page_size=` (max 500); the kanban board loads a whole pipeline in one request instead of walking 25-row pages.
+- `UserActivityView` uses a fixed set of grouped queries instead of a per-user loop.
+- Pending: co-locate the VM with Neon + right-size it. See `docs/PROGRESS.md` → Performance pass.
+
 ### ⏳ Phase 3 — Email automation (post-Phase 3.1)
 
 Models for `EmailTemplate` + `ScheduledEmail` are NOT yet built. They were planned but de-prioritized — backend is structured so adding them later requires zero schema changes to existing tables. Add Celery + Redis + a beat task when ready.
@@ -236,7 +243,7 @@ PATCH  /api/users/{id}/           any subset           → updated user
 GET    /api/events/[?active_only=true]
 
 # Leads (any auth, DELETE admin-only)
-GET    /api/leads/?status=&event_interest=&product_interest=&package_tier=&source=&assigned_to=&search=&created_after=&created_before=&next_followup_after=&next_followup_before=
+GET    /api/leads/?page_size=(≤500)&status=&event_interest=&product_interest=&package_tier=&source=&assigned_to=&search=&created_after=&created_before=&next_followup_after=&next_followup_before=
 POST   /api/leads/
 GET    /api/leads/{id}/
 PATCH  /api/leads/{id}/           # if status changes, status_change_comment is REQUIRED
@@ -324,6 +331,12 @@ When `Lead.objects.update(created_at=...)` backdates a row, the in-memory `lead.
 
 ### Postgres "pending trigger events" on enum migrations (Phase 2.5.1 fix)
 You can't `ALTER TABLE` in the same transaction that just queued cascade-delete trigger events on that table. When the Phase 2.5 migration tried to wipe `Lead` rows AND alter the `status` enum in one operation, Postgres rejected it with `cannot ALTER TABLE because it has pending trigger events`. **Fix**: split into two migrations — `0002_wipe_dummy_leads` (RunPython data wipe) and `0003_phase_2_5_restructure` (the schema changes). Each commits independently.
+
+### Meta.ordering leaks into `.distinct()`
+`Lead`, `Interaction`, and `StatusHistory` all have default `ordering`. Django adds those columns to `SELECT DISTINCT`, so `values_list("user", "lead").distinct()` silently stops de-duplicating. Always call `.order_by()` before `.values()/.values_list()` + `.distinct()` or `.annotate()` in aggregate queries.
+
+### Round trips are the bottleneck, not data volume
+The DB is in Singapore and every query is a network round trip. Prefer one grouped query over a per-row loop, and never walk pagination sequentially from the frontend when one larger page will do.
 
 ### Tier ↔ sub-pipeline mismatch
 A `PackageTier` belongs to exactly one `product_interest`. The serializer rejects writes where `lead.product_interest != lead.package_tier.product_interest`. The LeadForm cascades the tier dropdown by `product_interest` and **clears the tier** whenever the sub-pipeline changes. If you skip that auto-clear, stale tier ids leak through and the backend 400s.

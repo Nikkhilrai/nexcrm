@@ -93,9 +93,10 @@ if DATABASE_URL:
             "HOST": _u.hostname,
             "PORT": _u.port or 5432,
             "OPTIONS": {"sslmode": "require"},
-            # 0 = new connection per request (safe for direct Neon).
-            # Set DB_CONN_MAX_AGE=60 in .env after enabling Neon's PgBouncer pooler.
-            "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=0, cast=int),
+            # Reuse connections across requests: a fresh TLS + auth handshake to
+            # Neon costs several round trips (~0.5-1s from the VM) on every request.
+            # Health checks drop connections Neon closed during autosuspend.
+            "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=600, cast=int),
             "CONN_HEALTH_CHECKS": True,
         }
     }

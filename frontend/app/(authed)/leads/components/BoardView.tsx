@@ -270,9 +270,12 @@ async function fetchAllLeads(
   subPipelineId: number,
   isCancelled: () => boolean,
 ): Promise<LeadListItem[]> {
+  // Max page size so a typical pipeline loads in one round trip; the loop
+  // below only runs for pipelines over 500 leads.
   const first = await api.leads.list({
     event_interest: eventId,
     sub_pipeline: subPipelineId,
+    page_size: 500,
   });
   if (isCancelled()) return [];
 

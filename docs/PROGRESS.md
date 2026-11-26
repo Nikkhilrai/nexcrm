@@ -2,7 +2,7 @@
 
 > **Living document.** Update this whenever a step ships, is paused, or its scope changes. CLAUDE.md links here so a fresh Claude session can pick up exactly where the work left off.
 
-**Last updated:** 2026-05-08 (Phase 3.1 ✅ complete + post-3.1 dashboard refinement ✅ — entire dashboard now fully month-scoped: all KPIs, charts, and user-table figures change with the month picker. `followups_due` column hidden for past months. `leads_assigned` now shows leads created that month. Charts (`leads_by_status`, `leads_by_event`, daily conversions) all scoped to selected month. 76 Bangalore Delegate Pass dummy leads added for UI testing.)
+**Last updated:** 2026-11-26 (Performance pass steps 1–3 ✅ — persistent DB connections, single-request kanban load, batched user-activity queries. Step 4 (co-locate VM with Neon) pending. Previously: Phase 3.1 ✅ complete + post-3.1 dashboard refinement ✅ — entire dashboard now fully month-scoped: all KPIs, charts, and user-table figures change with the month picker. `followups_due` column hidden for past months. `leads_assigned` now shows leads created that month. Charts (`leads_by_status`, `leads_by_event`, daily conversions) all scoped to selected month. 76 Bangalore Delegate Pass dummy leads added for UI testing.)
 
 ---
 
@@ -21,6 +21,7 @@
 | 3.1 — Dashboard overhaul + fully month-scoped | ✅ Done | 4 / 4 + polish |
 | 3 — Email automation | ⏳ Not started | 0 / TBD |
 | 4 — Deploy | ⏳ Not started | 0 / TBD |
+| Perf — Speed pass | 🔄 In progress | 3 / 4 |
 
 **Currently working on:** Nothing — Phase 3.1 + post-3.1 dashboard polish shipped. Repo pushed to GitHub at https://github.com/Himmu1144/nexcrm.
 
@@ -468,6 +469,22 @@ After Phase 3.1, the dashboard had a confusing mix: some tiles (today/week) neve
 - `Charts.tsx` — descriptions updated; `conversions_last_30_days` ref → `conversions_by_day`.
 - `UserActivityTable.tsx` — all columns month-scoped; `followups_due` column conditionally rendered only for current month (hidden entirely for past months so there's no `—` confusion).
 - `admin/page.tsx` — passes `isCurrentMonth` flag to `UserActivityTable`.
+
+---
+
+## Performance pass 🔄 (3/4)
+
+CRM felt slow in production. Root cause was round trips: every request paid a fresh TLS handshake to Neon (Singapore), and the board/dashboard made many sequential calls.
+
+### Sub-step checklist
+- [x] **1. Persistent DB connections** — `CONN_MAX_AGE` default `0 → 600` in `core/settings.py` (`CONN_HEALTH_CHECKS` already on). Neon host is the direct endpoint, not the pooler, so long-lived connections are safe.
+- [x] **2. Kanban loads in one request** — `LeadCursorPagination` accepts `?page_size=` (max 500); `BoardView.fetchAllLeads` requests `page_size: 500`. Default stays 25 so List-view infinite scroll is unchanged.
+- [x] **3. Batched user-activity** — `UserActivityView` rewritten from ~9 queries/user to a fixed ~8 grouped queries. Every grouped/distinct query calls `.order_by()` to strip `Meta.ordering` (otherwise it leaks into `SELECT DISTINCT` and breaks dedupe).
+- [ ] **4. Co-locate infra** — move the VM next to Neon (or both next to users), right-size the VM, keep Neon warm. Waiting on the VM's current region.
+
+### Verification
+- Step 3: old vs new view compared on SQLite with 300 seeded leads / 5 callers: Nov 2026 51 → 8 queries, Oct 2026 36 → 6; every field identical (revenue only differs as `886392` vs `886392.00`, a SQLite SUM quirk — Postgres returns `.00` for both).
+- `tsc --noEmit` clean.
 
 ---
 
