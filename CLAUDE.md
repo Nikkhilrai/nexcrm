@@ -157,17 +157,19 @@ Fixed revenue calculation (was mixing INR + USD) and made the entire dashboard m
 - **Backend** — `_parse_month(request)` helper reads `?month=YYYY-MM` (stdlib `calendar.monthrange`). `DashboardView` splits revenue into `revenue_month_inr` + `revenue_month_usd`; `leads_by_status`, `leads_by_event`, and daily-conversion chart all filtered to the month window; `conversions_by_day` replaces the old rolling-30-day series. `UserActivityView` uses month-scoped counts for all activity fields (`calls_month`, `emails_month`, `leads_touched_month`, `interactions_month`); `leads_assigned` = leads created in the month; `followups_due` is `null` for past months (frontend hides the column entirely).
 - **Frontend** — `DashboardKpis` trimmed to month-only fields; `UserActivityRow` fields renamed to `_month` suffix. `KpiGrid.tsx` is a clean 4-tile grid (Leads, Conversions, Revenue ₹, Avg days to close). `UserActivityTable.tsx` hides the Follow-ups due column for past months. `admin/page.tsx` passes `isCurrentMonth` flag down.
 
-### 🔄 Performance pass (2026-11-26, 4/5)
+### 🔄 Performance pass (2026-11-26, 5/6)
 
 - `CONN_MAX_AGE` defaults to 600 (was 0 → a new TLS handshake to Neon on every request).
 - `/api/leads/` accepts `?page_size=` (max 500); the kanban board loads a whole pipeline in one request instead of walking 25-row pages.
 - `UserActivityView` uses a fixed set of grouped queries instead of a per-user loop.
 - Lead list N+1 fixed (`event_interest__hidden_from` prefetch).
-- Pending: move the VM from Mumbai to Singapore, next to Neon. See `docs/PROGRESS.md` → Performance pass.
+- Auth renders from the cached user while `/me/` runs in the background; Board fetches sub-pipelines once; gunicorn runs 2 `gthread` workers × 4 threads.
+- Pending: bring server and database into one region (VM to Singapore, or DB to Mumbai). See `docs/PROGRESS.md` → Performance pass.
 
 ### ⚠️ Production notes (2026-11-26)
 
 - Backend: GCP project `nexcrm-lextalk`, VM `nexcrm-backend-mumbai` (`asia-south1-a`), app in `/home/nikhilrai/nexcrm`, static IP in `frontend/next.config.ts`. An outage on this date coincided with billing being off and the VM stopped.
+- `deploy.sh` does not copy systemd unit files. The VM's unit differs from the repo copy (user and paths), so edit it in place when gunicorn flags change.
 - **`nexcrm-celery` and `nexcrm-celerybeat` are stopped and disabled on purpose** — old emails are still queued. Don't enable them without the owner's decision.
 - Frontend (`crm.lextalkworld.in`) is deployed with the Vercel CLI from `frontend/`. Git-triggered Vercel builds fail with "No Next.js version detected" (they build from the repo root).
 
@@ -347,6 +349,9 @@ The DB is in Singapore and every query is a network round trip. Prefer one group
 
 ### Nested serializers hide N+1 queries
 `LeadListSerializer` nests `EventSerializer`, whose `hidden_from_users` reads an M2M. Any relation a nested serializer touches must be in the queryset's `prefetch_related`. When changing a list serializer, check the query count with `CaptureQueriesContext` — it must not grow with row count.
+
+### `user` identity matters in effects
+Several pages list the auth `user` object as a `useEffect` dependency, and the lead form lives under one of them. Only replace `user` in `AuthProvider` when its data changes, or pages refetch and forms can reset mid-typing.
 
 ### Tier ↔ sub-pipeline mismatch
 A `PackageTier` belongs to exactly one `product_interest`. The serializer rejects writes where `lead.product_interest != lead.package_tier.product_interest`. The LeadForm cascades the tier dropdown by `product_interest` and **clears the tier** whenever the sub-pipeline changes. If you skip that auto-clear, stale tier ids leak through and the backend 400s.

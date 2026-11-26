@@ -2,7 +2,7 @@
 
 > **Living document.** Update this whenever a step ships, is paused, or its scope changes. CLAUDE.md links here so a fresh Claude session can pick up exactly where the work left off.
 
-**Last updated:** 2026-11-26 (Performance pass steps 1–3 ✅ — persistent DB connections, single-request kanban load, batched user-activity queries. Step 4 lead-list N+1 fix ✅. Step 5 (co-locate VM with Neon) pending. Backend restarted after a billing outage; email services deliberately OFF. Previously: Phase 3.1 ✅ complete + post-3.1 dashboard refinement ✅ — entire dashboard now fully month-scoped: all KPIs, charts, and user-table figures change with the month picker. `followups_due` column hidden for past months. `leads_assigned` now shows leads created that month. Charts (`leads_by_status`, `leads_by_event`, daily conversions) all scoped to selected month. 76 Bangalore Delegate Pass dummy leads added for UI testing.)
+**Last updated:** 2026-11-26 (Performance pass steps 1–3 ✅ — persistent DB connections, single-request kanban load, batched user-activity queries. Step 4 lead-list N+1 fix ✅. Step 5 free fixes ✅. Step 6 (bring server and database together) pending. Backend restarted after a billing outage; email services deliberately OFF. Previously: Phase 3.1 ✅ complete + post-3.1 dashboard refinement ✅ — entire dashboard now fully month-scoped: all KPIs, charts, and user-table figures change with the month picker. `followups_due` column hidden for past months. `leads_assigned` now shows leads created that month. Charts (`leads_by_status`, `leads_by_event`, daily conversions) all scoped to selected month. 76 Bangalore Delegate Pass dummy leads added for UI testing.)
 
 ---
 
@@ -21,7 +21,7 @@
 | 3.1 — Dashboard overhaul + fully month-scoped | ✅ Done | 4 / 4 + polish |
 | 3 — Email automation | ⏳ Not started | 0 / TBD |
 | 4 — Deploy | ⏳ Not started | 0 / TBD |
-| Perf — Speed pass | 🔄 In progress | 4 / 5 |
+| Perf — Speed pass | 🔄 In progress | 5 / 6 |
 
 **Currently working on:** Nothing — Phase 3.1 + post-3.1 dashboard polish shipped. Repo pushed to GitHub at https://github.com/Himmu1144/nexcrm.
 
@@ -472,7 +472,7 @@ After Phase 3.1, the dashboard had a confusing mix: some tiles (today/week) neve
 
 ---
 
-## Performance pass 🔄 (4/5)
+## Performance pass 🔄 (5/6)
 
 CRM felt slow in production. Root cause was round trips: every request paid a fresh TLS handshake to Neon (Singapore), and the board/dashboard made many sequential calls.
 
@@ -481,7 +481,8 @@ CRM felt slow in production. Root cause was round trips: every request paid a fr
 - [x] **2. Kanban loads in one request** — `LeadCursorPagination` accepts `?page_size=` (max 500); `BoardView.fetchAllLeads` requests `page_size: 500`. Default stays 25 so List-view infinite scroll is unchanged.
 - [x] **3. Batched user-activity** — `UserActivityView` rewritten from ~9 queries/user to a fixed ~8 grouped queries. Every grouped/distinct query calls `.order_by()` to strip `Meta.ordering` (otherwise it leaks into `SELECT DISTINCT` and breaks dedupe).
 - [x] **4. Lead-list N+1** — the nested `EventSerializer` read `event.hidden_from` once per lead. Added `prefetch_related("event_interest__hidden_from")` to `LeadViewSet.get_queryset`.
-- [ ] **5. Co-locate infra** — VM is in Mumbai (`asia-south1-a`, `e2-micro`), Neon is in Singapore (~62ms per query). Move to `asia-southeast1` after re-measuring; use Ubuntu 24.04 (setup script needs Python 3.12). Keep Neon warm. Add HTTPS (Vercel → VM is plain HTTP).
+- [x] **5. Free fixes** — (a) `AuthProvider` renders from the cached user and checks `/api/auth/me/` in the background; only 401/403 or cleared tokens sign out, and `user` keeps the same reference when unchanged. (b) `BoardView` receives sub-pipelines from the page instead of refetching. (c) gunicorn `gthread`, 2 workers × 4 threads. Verified in headless Chrome against a local copy; with a simulated 58ms query delay, 7 parallel requests went from a 771ms to 338ms median.
+- [ ] **6. Co-locate infra** — VM is in Mumbai (`asia-south1-a`, `e2-micro`), Neon is in Singapore (~62ms per query). Move to `asia-southeast1` after re-measuring; use Ubuntu 24.04 (setup script needs Python 3.12). Keep Neon warm. Add HTTPS (Vercel → VM is plain HTTP).
 
 ### Verification
 - Step 3: old vs new view compared on SQLite with 300 seeded leads / 5 callers: Nov 2026 51 → 8 queries, Oct 2026 36 → 6; every field identical (revenue only differs as `886392` vs `886392.00`, a SQLite SUM quirk — Postgres returns `.00` for both).

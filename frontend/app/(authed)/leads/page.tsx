@@ -190,6 +190,7 @@ function LeadsPageInner() {
           <BoardView
             events={events}
             eventSlug={resolvedEventSlug}
+            allSubPipelines={allSubPipelines}
             pipelineSlug={resolvedPipelineSlug}
             onScopeChange={setBoardScope}
           />

@@ -24,6 +24,8 @@ export interface BoardViewProps {
   events: ApiEvent[];
   /** Currently selected event slug (URL-controlled). */
   eventSlug: string;
+  /** Every active sub-pipeline, fetched once by the page. Null while loading. */
+  allSubPipelines: SubPipeline[] | null;
   /** Currently selected sub-pipeline slug (URL-controlled). Backend-persisted. */
   pipelineSlug: string;
   /** Fired when the user clicks a different event/sub-pipeline tab. Parent
@@ -40,28 +42,13 @@ export interface BoardViewProps {
 export function BoardView({
   events,
   eventSlug: evSlug,
+  allSubPipelines,
   pipelineSlug,
   onScopeChange,
 }: BoardViewProps) {
   const [leads, setLeads] = useState<LeadListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [allSubPipelines, setAllSubPipelines] = useState<SubPipeline[] | null>(null);
-
-  // One-shot fetch of every active sub-pipeline; we filter client-side per
-  // event below. Tiny list (~15 rows on seeded data) so this is cheaper
-  // than re-fetching every time the event tab changes.
-  useEffect(() => {
-    let cancelled = false;
-    api.subPipelines
-      .list({ is_active: true })
-      .then((rows) => !cancelled && setAllSubPipelines(rows))
-      .catch(() => !cancelled && setAllSubPipelines([]));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   // Resolve URL slugs to actual entities. If a slug doesn't match (e.g.
   // someone hand-typed `/leads?event=999`) we fall back to the first
   // valid option silently — better UX than a 404 inside the home page.

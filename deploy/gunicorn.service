@@ -11,6 +11,8 @@ ExecStartPre=/bin/mkdir -p /run/gunicorn
 ExecStartPre=/bin/chown ubuntu:ubuntu /run/gunicorn
 ExecStart=/home/ubuntu/nexcrm/backend/.venv/bin/gunicorn \
     --workers 2 \
+    --worker-class gthread \
+    --threads 4 \
     --bind unix:/run/gunicorn/gunicorn.sock \
     --access-logfile /var/log/nexcrm/gunicorn-access.log \
     --error-logfile /var/log/nexcrm/gunicorn-error.log \
