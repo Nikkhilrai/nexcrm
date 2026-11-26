@@ -68,7 +68,11 @@ class LeadViewSet(viewsets.ModelViewSet):
             "created_by",
             "package_tier",
             "sub_pipeline",
-        ).prefetch_related(Prefetch("status_history", queryset=history_qs)).filter(
+        ).prefetch_related(
+            Prefetch("status_history", queryset=history_qs),
+            # The nested EventSerializer reads hidden_from for every lead.
+            "event_interest__hidden_from",
+        ).filter(
             event_interest__in=accessible_events(self.request.user)
         )
 

@@ -157,12 +157,19 @@ Fixed revenue calculation (was mixing INR + USD) and made the entire dashboard m
 - **Backend** — `_parse_month(request)` helper reads `?month=YYYY-MM` (stdlib `calendar.monthrange`). `DashboardView` splits revenue into `revenue_month_inr` + `revenue_month_usd`; `leads_by_status`, `leads_by_event`, and daily-conversion chart all filtered to the month window; `conversions_by_day` replaces the old rolling-30-day series. `UserActivityView` uses month-scoped counts for all activity fields (`calls_month`, `emails_month`, `leads_touched_month`, `interactions_month`); `leads_assigned` = leads created in the month; `followups_due` is `null` for past months (frontend hides the column entirely).
 - **Frontend** — `DashboardKpis` trimmed to month-only fields; `UserActivityRow` fields renamed to `_month` suffix. `KpiGrid.tsx` is a clean 4-tile grid (Leads, Conversions, Revenue ₹, Avg days to close). `UserActivityTable.tsx` hides the Follow-ups due column for past months. `admin/page.tsx` passes `isCurrentMonth` flag down.
 
-### 🔄 Performance pass (2026-11-26, 3/4)
+### 🔄 Performance pass (2026-11-26, 4/5)
 
 - `CONN_MAX_AGE` defaults to 600 (was 0 → a new TLS handshake to Neon on every request).
 - `/api/leads/` accepts `?page_size=` (max 500); the kanban board loads a whole pipeline in one request instead of walking 25-row pages.
 - `UserActivityView` uses a fixed set of grouped queries instead of a per-user loop.
-- Pending: co-locate the VM with Neon + right-size it. See `docs/PROGRESS.md` → Performance pass.
+- Lead list N+1 fixed (`event_interest__hidden_from` prefetch).
+- Pending: move the VM from Mumbai to Singapore, next to Neon. See `docs/PROGRESS.md` → Performance pass.
+
+### ⚠️ Production notes (2026-11-26)
+
+- Backend: GCP project `nexcrm-lextalk`, VM `nexcrm-backend-mumbai` (`asia-south1-a`), app in `/home/nikhilrai/nexcrm`, static IP in `frontend/next.config.ts`. An outage on this date coincided with billing being off and the VM stopped.
+- **`nexcrm-celery` and `nexcrm-celerybeat` are stopped and disabled on purpose** — old emails are still queued. Don't enable them without the owner's decision.
+- Frontend (`crm.lextalkworld.in`) is deployed with the Vercel CLI from `frontend/`. Git-triggered Vercel builds fail with "No Next.js version detected" (they build from the repo root).
 
 ### ⏳ Phase 3 — Email automation (post-Phase 3.1)
 
@@ -337,6 +344,9 @@ You can't `ALTER TABLE` in the same transaction that just queued cascade-delete 
 
 ### Round trips are the bottleneck, not data volume
 The DB is in Singapore and every query is a network round trip. Prefer one grouped query over a per-row loop, and never walk pagination sequentially from the frontend when one larger page will do.
+
+### Nested serializers hide N+1 queries
+`LeadListSerializer` nests `EventSerializer`, whose `hidden_from_users` reads an M2M. Any relation a nested serializer touches must be in the queryset's `prefetch_related`. When changing a list serializer, check the query count with `CaptureQueriesContext` — it must not grow with row count.
 
 ### Tier ↔ sub-pipeline mismatch
 A `PackageTier` belongs to exactly one `product_interest`. The serializer rejects writes where `lead.product_interest != lead.package_tier.product_interest`. The LeadForm cascades the tier dropdown by `product_interest` and **clears the tier** whenever the sub-pipeline changes. If you skip that auto-clear, stale tier ids leak through and the backend 400s.

@@ -25,7 +25,10 @@ echo "→ Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
 echo "→ Restarting services..."
-sudo systemctl restart nexcrm-gunicorn nexcrm-celery nexcrm-celerybeat
+sudo systemctl restart nexcrm-gunicorn
+# try-restart only restarts services that are already running, so a deploy
+# never switches email sending back on after it has been stopped on purpose.
+sudo systemctl try-restart nexcrm-celery nexcrm-celerybeat
 
 echo ""
 echo "✅ Deployed successfully!"
